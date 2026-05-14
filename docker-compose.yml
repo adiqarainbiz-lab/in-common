@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: incommon
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: incommon_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/migrations/001_initial.sql:/docker-entrypoint-initdb.d/01_schema.sql
+      - ./backend/migrations/002_seed.sql:/docker-entrypoint-initdb.d/02_seed.sql
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      PORT: 3000
+      NODE_ENV: development
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: incommon
+      DB_USER: postgres
+      DB_PASSWORD: incommon_dev
+      JWT_SECRET: dev-secret-replace-in-production-min-32-chars-long
+      JWT_EXPIRES_IN: 7d
+      OTP_DELIVERY: console
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:

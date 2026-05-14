@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "In Common",
+    "slug": "in-common-member",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#2D6A4F"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "ps.incommon.member"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#2D6A4F"
+      },
+      "package": "ps.incommon.member"
+    }
+  }
+}
