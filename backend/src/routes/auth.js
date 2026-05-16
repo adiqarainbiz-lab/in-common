@@ -3,6 +3,7 @@ const bcrypt  = require('bcryptjs');
 const jwt     = require('jsonwebtoken');
 const crypto  = require('crypto');
 const db      = require('../config/database');
+const { sendOTP: sendSMS } = require('../services/smsService');
 
 // ─── Member: request OTP ─────────────────────────────────────────────────────
 router.post('/member/request-otp', async (req, res, next) => {
@@ -18,12 +19,14 @@ router.post('/member/request-otp', async (req, res, next) => {
       [phone_number, otp, expiresAt],
     );
 
-    // In production: send via SMS gateway. In dev: return in response.
-    if (process.env.OTP_DELIVERY === 'console' || process.env.NODE_ENV !== 'production') {
-      console.log(`[OTP] ${phone_number} → ${otp}`);
-      return res.json({ message: 'OTP sent', dev_otp: otp });
+    if (process.env.OTP_DELIVERY === 'sms') {
+      await sendSMS(phone_number, otp);
+      return res.json({ message: 'OTP sent to your phone' });
     }
-    res.json({ message: 'OTP sent to your phone' });
+
+    // Dev fallback: return OTP in response
+    console.log(`[OTP] ${phone_number} → ${otp}`);
+    res.json({ message: 'OTP sent', dev_otp: otp });
   } catch (e) { next(e); }
 });
 

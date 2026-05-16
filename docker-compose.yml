@@ -28,7 +28,10 @@ services:
       DB_PASSWORD: incommon_dev
       JWT_SECRET: dev-secret-replace-in-production-min-32-chars-long
       JWT_EXPIRES_IN: 7d
-      OTP_DELIVERY: console
+      OTP_DELIVERY: ${OTP_DELIVERY:-console}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER:-}
     ports:
       - "3000:3000"
     volumes:
