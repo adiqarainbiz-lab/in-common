@@ -7,6 +7,7 @@ CREATE TABLE members (
   points_balance  INTEGER DEFAULT 0 CHECK (points_balance >= 0),
   tier            VARCHAR(20) DEFAULT 'Seedling',
   qr_secret       VARCHAR(64) NOT NULL,
+  member_code     VARCHAR(10) UNIQUE,
   last_activity_at TIMESTAMP DEFAULT NOW(),
   created_at      TIMESTAMP DEFAULT NOW()
 );

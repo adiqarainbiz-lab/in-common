@@ -65,10 +65,10 @@ router.get('/businesses', async (req, res, next) => {
   try {
     const { category } = req.query;
     const params = [];
-    let where = 'WHERE b.is_active=TRUE';
+    let where = 'WHERE is_active=TRUE';
     if (category) {
       params.push(category);
-      where += ` AND b.category=$${params.length}`;
+      where += ` AND category=$${params.length}`;
     }
 
     const result = await db.query(

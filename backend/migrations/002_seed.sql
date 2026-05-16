@@ -14,6 +14,6 @@ SELECT
   id,
   'Manager Account',
   '+972501000001',
-  '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMZJaaaSwqa2PQYB2zy8L6G0a2', -- admin123
+  '$2a$12$2UvK7OLw.ldRMv2tsfSsn.tztwGr6LU78sBX22kRaC6/G5H6rxzcm', -- admin123
   'manager'
 FROM businesses WHERE name = 'Al-Quds Bakery';
