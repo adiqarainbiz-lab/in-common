@@ -36,4 +36,12 @@ async function run() {
   console.log('Migration complete.');
 }
 
-run().catch((e) => { console.error(e); process.exit(1); });
+async function runMigrations() {
+  await run();
+}
+
+module.exports = { runMigrations };
+
+if (require.main === module) {
+  run().catch((e) => { console.error(e); process.exit(1); });
+}

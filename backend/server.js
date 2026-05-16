@@ -1,10 +1,16 @@
 require('dotenv').config();
 const app = require('./src/app');
 const { startBreakageScheduler } = require('./src/services/breakageService');
+const { runMigrations } = require('./scripts/migrate');
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-  console.log(`In Common backend listening on :${PORT}`);
-  startBreakageScheduler();
+runMigrations().then(() => {
+  app.listen(PORT, () => {
+    console.log(`In Common backend listening on :${PORT}`);
+    startBreakageScheduler();
+  });
+}).catch((e) => {
+  console.error('Migration failed, aborting startup:', e);
+  process.exit(1);
 });
