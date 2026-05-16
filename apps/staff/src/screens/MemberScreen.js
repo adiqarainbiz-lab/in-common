@@ -15,6 +15,7 @@ export default function MemberScreen({ route, navigation }) {
   const [pts,     setPts]     = useState('');
   const [loading, setLoading] = useState(false);
   const [result,  setResult]  = useState(null);
+  const [error,   setError]   = useState('');
 
   if (!member) return null;
 
@@ -22,7 +23,8 @@ export default function MemberScreen({ route, navigation }) {
   const canAfford = ptsNum > 0 && member.points_balance >= ptsNum;
 
   const handleEarn = async () => {
-    if (ptsNum <= 0) return Alert.alert('Enter points to award');
+    if (ptsNum <= 0) return setError('Enter points to award');
+    setError('');
     setLoading(true);
     try {
       const res = await staffApi.earn(member.id, ptsNum);
@@ -31,13 +33,14 @@ export default function MemberScreen({ route, navigation }) {
       setPts('');
       setMode(null);
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.error || 'Could not award points');
+      setError(e.response?.data?.error || 'Could not award points');
     } finally { setLoading(false); }
   };
 
   const handleRedeem = async () => {
-    if (ptsNum <= 0) return Alert.alert('Enter points to redeem');
-    if (!canAfford) return Alert.alert('Not enough points', `Member has ${member.points_balance} pts`);
+    if (ptsNum <= 0) return setError('Enter points to redeem');
+    if (!canAfford) return setError(`Only ${member.points_balance} pts available`);
+    setError('');
     setLoading(true);
     try {
       const res = await staffApi.redeem(member.id, ptsNum);
@@ -46,7 +49,7 @@ export default function MemberScreen({ route, navigation }) {
       setPts('');
       setMode(null);
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.error || 'Could not redeem points');
+      setError(e.response?.data?.error || 'Could not redeem points');
     } finally { setLoading(false); }
   };
 
@@ -118,18 +121,21 @@ export default function MemberScreen({ route, navigation }) {
                   style={styles.amountInput}
                   placeholder="0"
                   value={pts}
-                  onChangeText={setPts}
+                  onChangeText={v => { setPts(v); setError(''); }}
                   keyboardType="number-pad"
                   autoFocus
+                  onSubmitEditing={handleEarn}
+                  returnKeyType="go"
                 />
                 <Text style={styles.unitLabel}>pts</Text>
               </View>
+              {error ? <Text style={styles.errorText}>{error}</Text> : null}
               <View style={styles.formButtons}>
-                <TouchableOpacity style={styles.cancelBtn} onPress={() => { setMode(null); setPts(''); }}>
+                <TouchableOpacity style={styles.cancelBtn} onPress={() => { setMode(null); setPts(''); setError(''); }}>
                   <Text style={styles.cancelText}>Cancel</Text>
                 </TouchableOpacity>
                 {loading ? <ActivityIndicator color="#2D6A4F" /> : (
-                  <TouchableOpacity style={[styles.confirmBtn, ptsNum <= 0 && styles.btnDisabled]} onPress={handleEarn}>
+                  <TouchableOpacity style={styles.confirmBtn} onPress={handleEarn}>
                     <Text style={styles.confirmText}>Confirm</Text>
                   </TouchableOpacity>
                 )}
@@ -146,25 +152,28 @@ export default function MemberScreen({ route, navigation }) {
                   style={styles.amountInput}
                   placeholder="0"
                   value={pts}
-                  onChangeText={setPts}
+                  onChangeText={v => { setPts(v); setError(''); }}
                   keyboardType="number-pad"
                   autoFocus
+                  onSubmitEditing={handleRedeem}
+                  returnKeyType="go"
                 />
                 <Text style={styles.unitLabel}>pts</Text>
               </View>
-              {pts ? (
+              {pts && !error ? (
                 <Text style={[styles.preview, !canAfford && styles.previewError]}>
                   {canAfford
                     ? `${member.points_balance - ptsNum} pts remaining after redemption`
                     : `Only ${member.points_balance} pts available`}
                 </Text>
               ) : null}
+              {error ? <Text style={styles.errorText}>{error}</Text> : null}
               <View style={styles.formButtons}>
-                <TouchableOpacity style={styles.cancelBtn} onPress={() => { setMode(null); setPts(''); }}>
+                <TouchableOpacity style={styles.cancelBtn} onPress={() => { setMode(null); setPts(''); setError(''); }}>
                   <Text style={styles.cancelText}>Cancel</Text>
                 </TouchableOpacity>
                 {loading ? <ActivityIndicator color="#2D6A4F" /> : (
-                  <TouchableOpacity style={[styles.confirmBtn, !canAfford && styles.btnDisabled]} onPress={handleRedeem}>
+                  <TouchableOpacity style={styles.confirmBtn} onPress={handleRedeem}>
                     <Text style={styles.confirmText}>Confirm</Text>
                   </TouchableOpacity>
                 )}
@@ -219,4 +228,5 @@ const styles = StyleSheet.create({
   cancelText:   { color: '#666', fontWeight: '700', fontSize: 16 },
   confirmBtn:   { flex: 2, backgroundColor: '#2D6A4F', borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   confirmText:  { color: 'white', fontWeight: '700', fontSize: 16 },
+  errorText:    { color: '#C1121F', fontSize: 13, textAlign: 'center', fontWeight: '600' },
 });

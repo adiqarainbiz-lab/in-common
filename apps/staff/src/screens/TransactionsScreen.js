@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { staffApi } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 function dateStr(d) {
   return new Date(d).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
@@ -26,6 +27,7 @@ function TxRow({ item }) {
 }
 
 export default function TransactionsScreen() {
+  const { logout } = useAuth();
   const today     = new Date().toISOString().slice(0, 10);
   const [date,    setDate]    = useState(today);
   const [data,    setData]    = useState(null);
@@ -50,6 +52,14 @@ export default function TransactionsScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Transactions</Text>
+        <TouchableOpacity onPress={logout}>
+          <Text style={styles.logoutBtn}>Log out</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Date nav */}
       <View style={styles.dateNav}>
         <TouchableOpacity style={styles.navBtn} onPress={() => shiftDay(-1)}>
@@ -99,6 +109,9 @@ export default function TransactionsScreen() {
 
 const styles = StyleSheet.create({
   safe:        { flex: 1, backgroundColor: '#F5F7F5' },
+  header:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
+  headerTitle: { fontSize: 18, fontWeight: '800', color: '#1B4332' },
+  logoutBtn:   { fontSize: 14, color: '#C1121F', fontWeight: '600' },
   dateNav:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16 },
   navBtn:      { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
   navArrow:    { fontSize: 22, color: '#2D6A4F', fontWeight: '700' },
