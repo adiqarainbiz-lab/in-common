@@ -17,42 +17,46 @@ export default function AuthScreen() {
   const [isNew,    setIsNew]    = useState(false);
   const [loading,  setLoading]  = useState(false);
   const [devOtp,   setDevOtp]   = useState('');
+  const [error,    setError]    = useState('');
 
   const handlePhone = async () => {
-    if (!phone.trim()) return Alert.alert('Enter your phone number');
+    if (!phone.trim()) return setError('Enter your phone number');
+    setError('');
     setLoading(true);
     try {
       const res = await requestOTP(phone.trim());
       if (res.dev_otp) setDevOtp(res.dev_otp);
       setStep(STEPS.OTP);
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.error || 'Could not send OTP');
+      setError(e.response?.data?.error || 'Could not send OTP');
     } finally { setLoading(false); }
   };
 
   const handleOTP = async () => {
-    if (otp.length !== 6) return Alert.alert('Enter the 6-digit code');
+    if (otp.length !== 6) return setError('Enter the 6-digit code');
+    setError('');
     setLoading(true);
     try {
-      await login(phone.trim(), otp.trim(), isNew ? undefined : undefined);
+      await login(phone.trim(), otp.trim(), undefined);
     } catch (e) {
       const errMsg = e.response?.data?.error || '';
       if (errMsg.includes('name required')) {
         setIsNew(true);
         setStep(STEPS.NAME);
       } else {
-        Alert.alert('Error', errMsg || 'Invalid OTP');
+        setError(errMsg || 'Invalid OTP');
       }
     } finally { setLoading(false); }
   };
 
   const handleName = async () => {
-    if (!name.trim()) return Alert.alert('Enter your name');
+    if (!name.trim()) return setError('Enter your name');
+    setError('');
     setLoading(true);
     try {
       await login(phone.trim(), otp.trim(), name.trim());
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.error || 'Registration failed');
+      setError(e.response?.data?.error || 'Registration failed');
     } finally { setLoading(false); }
   };
 
@@ -70,10 +74,13 @@ export default function AuthScreen() {
                 style={styles.input}
                 placeholder="+972 50 000 0000"
                 value={phone}
-                onChangeText={setPhone}
+                onChangeText={v => { setPhone(v); setError(''); }}
                 keyboardType="phone-pad"
                 autoFocus
+                onSubmitEditing={handlePhone}
+                returnKeyType="go"
               />
+              {error ? <Text style={styles.error}>{error}</Text> : null}
               {loading ? <ActivityIndicator color="#2D6A4F" /> : (
                 <TouchableOpacity style={styles.btn} onPress={handlePhone}>
                   <Text style={styles.btnText}>Send Code</Text>
@@ -90,17 +97,20 @@ export default function AuthScreen() {
                 style={[styles.input, styles.otpInput]}
                 placeholder="000000"
                 value={otp}
-                onChangeText={setOtp}
+                onChangeText={v => { setOtp(v); setError(''); }}
                 keyboardType="number-pad"
                 maxLength={6}
                 autoFocus
+                onSubmitEditing={handleOTP}
+                returnKeyType="go"
               />
+              {error ? <Text style={styles.error}>{error}</Text> : null}
               {loading ? <ActivityIndicator color="#2D6A4F" /> : (
                 <TouchableOpacity style={styles.btn} onPress={handleOTP}>
                   <Text style={styles.btnText}>Verify</Text>
                 </TouchableOpacity>
               )}
-              <TouchableOpacity onPress={() => setStep(STEPS.PHONE)}>
+              <TouchableOpacity onPress={() => { setStep(STEPS.PHONE); setError(''); }}>
                 <Text style={styles.back}>← Change number</Text>
               </TouchableOpacity>
             </>
@@ -113,10 +123,13 @@ export default function AuthScreen() {
                 style={styles.input}
                 placeholder="Your full name"
                 value={name}
-                onChangeText={setName}
+                onChangeText={v => { setName(v); setError(''); }}
                 autoCapitalize="words"
                 autoFocus
+                onSubmitEditing={handleName}
+                returnKeyType="go"
               />
+              {error ? <Text style={styles.error}>{error}</Text> : null}
               {loading ? <ActivityIndicator color="#2D6A4F" /> : (
                 <TouchableOpacity style={styles.btn} onPress={handleName}>
                   <Text style={styles.btnText}>Join In Common</Text>
@@ -146,4 +159,5 @@ const styles = StyleSheet.create({
   back:      { textAlign: 'center', color: '#2D6A4F', fontSize: 14 },
   devHint:   { backgroundColor: '#FFF3CD', padding: 8, borderRadius: 8, fontSize: 13, color: '#856404', textAlign: 'center' },
   footer:    { textAlign: 'center', color: '#FFFFFF66', marginTop: 32, fontSize: 13 },
+  error:     { color: '#D62828', fontSize: 13, textAlign: 'center' },
 });
