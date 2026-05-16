@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { staffAuth } from '../services/api';
+import { staffAuth, setUnauthorizedHandler } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -33,6 +33,10 @@ export function AuthProvider({ children }) {
     setToken(null);
     setStaff(null);
   };
+
+  useEffect(() => {
+    setUnauthorizedHandler(logout);
+  }, []);
 
   return (
     <AuthContext.Provider value={{ token, staff, loading, login, logout }}>

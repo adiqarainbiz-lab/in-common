@@ -23,7 +23,7 @@ function BusinessCard({ item }) {
       </View>
       <View style={styles.cardRight}>
         <Text style={styles.cardRate}>{item.points_rate}</Text>
-        <Text style={styles.cardRateLabel}>pts/JD</Text>
+        <Text style={styles.cardRateLabel}>pts per visit</Text>
       </View>
     </View>
   );

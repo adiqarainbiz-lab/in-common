@@ -13,6 +13,7 @@ export default function ScannerScreen({ navigation }) {
   const [mode,          setMode]          = useState('scan'); // 'scan' | 'code'
   const [code,          setCode]          = useState('');
   const [codeLoading,   setCodeLoading]   = useState(false);
+  const [codeError,     setCodeError]     = useState('');
   const lastScan = useRef(0);
 
   useEffect(() => {
@@ -40,15 +41,17 @@ export default function ScannerScreen({ navigation }) {
   };
 
   const handleCodeLookup = async () => {
-    if (code.length !== 6) return Alert.alert('Enter the 6-digit member code');
+    if (!code.trim()) return;
+    setCodeError('');
     setCodeLoading(true);
     try {
-      const res = await staffApi.lookupCode(code);
+      const res = await staffApi.lookupCode(code.trim());
       setCode('');
+      setCodeError('');
       setMode('scan');
       navigation.navigate('Member', { member: res.data.member });
     } catch (e) {
-      Alert.alert('Not Found', e.response?.data?.error || 'No member with that code');
+      setCodeError(e.response?.data?.error || 'No member found with that code');
     } finally { setCodeLoading(false); }
   };
 
@@ -72,10 +75,13 @@ export default function ScannerScreen({ navigation }) {
               keyboardType="number-pad"
               maxLength={6}
               autoFocus
+              onSubmitEditing={handleCodeLookup}
+              returnKeyType="go"
             />
+            {codeError ? <Text style={styles.codeError}>{codeError}</Text> : null}
             {codeLoading ? <ActivityIndicator color="#2D6A4F" size="large" /> : (
               <TouchableOpacity
-                style={[styles.codeBtn, code.length !== 6 && styles.codeBtnDisabled]}
+                style={styles.codeBtn}
                 onPress={handleCodeLookup}
               >
                 <Text style={styles.codeBtnText}>Find Member</Text>
@@ -180,6 +186,7 @@ const styles = StyleSheet.create({
   codeTitle:        { color: 'white', fontSize: 22, fontWeight: '800' },
   codeSub:          { color: '#FFFFFF88', fontSize: 14, textAlign: 'center' },
   codeInput:        { backgroundColor: 'white', borderRadius: 16, padding: 20, fontSize: 36, fontWeight: '800', color: '#1B4332', textAlign: 'center', letterSpacing: 12, width: '100%' },
+  codeError:        { color: '#FF6B6B', fontSize: 14, textAlign: 'center' },
   codeBtn:          { backgroundColor: '#52B788', borderRadius: 14, paddingVertical: 16, paddingHorizontal: 40, alignItems: 'center', width: '100%' },
   codeBtnDisabled:  { opacity: 0.4 },
   codeBtnText:      { color: 'white', fontSize: 16, fontWeight: '700' },
