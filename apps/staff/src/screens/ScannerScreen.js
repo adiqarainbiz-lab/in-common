@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { Camera, CameraView } from 'expo-camera';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { staffApi } from '../services/api';
@@ -10,6 +10,7 @@ export default function ScannerScreen({ navigation }) {
   const [hasPermission, setHasPermission] = useState(null);
   const [scanning,      setScanning]      = useState(true);
   const [processing,    setProcessing]    = useState(false);
+  const [scanError,     setScanError]     = useState('');
   const [mode,          setMode]          = useState('scan'); // 'scan' | 'code'
   const [code,          setCode]          = useState('');
   const [codeLoading,   setCodeLoading]   = useState(false);
@@ -33,10 +34,8 @@ export default function ScannerScreen({ navigation }) {
       navigation.navigate('Member', { member: res.data.member });
     } catch (e) {
       const msg = e.response?.data?.error || 'Could not read QR code';
-      Alert.alert('Scan Failed', msg, [
-        { text: 'Try Again', onPress: () => { setScanning(true); setProcessing(false); } },
-        { text: 'Enter Code', onPress: () => { setMode('code'); setProcessing(false); } },
-      ]);
+      setScanError(msg);
+      setProcessing(false);
     }
   };
 
@@ -140,10 +139,26 @@ export default function ScannerScreen({ navigation }) {
             <View style={styles.sideFade} />
           </View>
           <View style={styles.bottomFade}>
-            <Text style={styles.scanHint}>Point camera at member's QR code</Text>
-            <TouchableOpacity style={styles.manualBtn} onPress={() => setMode('code')}>
-              <Text style={styles.manualBtnText}>Enter Code Instead</Text>
-            </TouchableOpacity>
+            {scanError ? (
+              <>
+                <Text style={styles.scanErrorText}>{scanError}</Text>
+                <View style={styles.scanErrorBtns}>
+                  <TouchableOpacity style={styles.manualBtn} onPress={() => { setScanError(''); setScanning(true); }}>
+                    <Text style={styles.manualBtnText}>Try Again</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.manualBtn} onPress={() => { setScanError(''); setMode('code'); }}>
+                    <Text style={styles.manualBtnText}>Enter Code</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : (
+              <>
+                <Text style={styles.scanHint}>Point camera at member's QR code</Text>
+                <TouchableOpacity style={styles.manualBtn} onPress={() => setMode('code')}>
+                  <Text style={styles.manualBtnText}>Enter Code Instead</Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </View>
       </View>
@@ -177,6 +192,8 @@ const styles = StyleSheet.create({
   processingOverlay:{ ...StyleSheet.absoluteFillObject, backgroundColor: '#2D6A4F99', justifyContent: 'center', alignItems: 'center' },
   processingText:   { color: 'white', fontSize: 16, fontWeight: '700' },
   scanHint:         { color: '#FFFFFF88', fontSize: 14, textAlign: 'center' },
+  scanErrorText:    { color: '#FF6B6B', fontSize: 14, fontWeight: '700', textAlign: 'center', paddingHorizontal: 16 },
+  scanErrorBtns:    { flexDirection: 'row', gap: 12 },
   manualBtn:        { backgroundColor: '#FFFFFF22', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 20, borderWidth: 1, borderColor: '#FFFFFF44' },
   manualBtnText:    { color: 'white', fontWeight: '600', fontSize: 14 },
   // Code entry mode
