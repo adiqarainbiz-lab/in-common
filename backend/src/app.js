@@ -14,6 +14,7 @@ app.use('/api/auth/member/request-otp', rateLimit({ windowMs: 60_000, max: 3, me
 app.use('/api/', rateLimit({ windowMs: 60_000, max: 120 }));
 
 app.use('/api/auth',       require('./routes/auth'));
+app.use('/api/admin',      require('./routes/admin'));
 app.use('/api/member',     require('./routes/member'));
 app.use('/api/staff',      require('./routes/staff'));
 app.use('/api/businesses', require('./routes/businesses'));

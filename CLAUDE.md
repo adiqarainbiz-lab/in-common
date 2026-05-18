@@ -7,6 +7,7 @@ Community loyalty platform for Palestinian-owned businesses in Jerusalem. Member
 - `backend/` — Node.js/Express REST API
 - `apps/member/` — React Native member app (Expo)
 - `apps/staff/` — React Native staff scanner app (Expo)
+- `apps/admin/` — React (Vite) admin dashboard (web)
 
 ---
 
@@ -33,6 +34,16 @@ cd apps/member && npx expo start
 cd apps/staff && npx expo start
 ```
 
+**Start admin app:**
+```
+cd apps/admin && npm install && npm run dev   # runs on http://localhost:4000
+```
+
+**Create first admin account:**
+```
+cd backend && node scripts/create-admin.js admin@example.com password123 "Admin Name"
+```
+
 ---
 
 ## Backend
@@ -57,6 +68,8 @@ cd apps/staff && npx expo start
 - `PORT`, `NODE_ENV`, DB credentials
 - `JWT_SECRET`, `JWT_EXPIRES_IN`, `QR_JWT_EXPIRES_IN`
 - `OTP_DELIVERY` — `console` in dev, `sms` in production
+
+**Admin routes** (`/api/admin/*`): login, business CRUD, staff CRUD per business, password reset — all protected by `authAdmin` middleware (JWT `type: 'admin'`).
 
 **Tech stack:** Node.js 20, Express 4, PostgreSQL 16, JWT, bcryptjs, node-cron, uuid, express-rate-limit
 
