@@ -34,7 +34,8 @@ export const staffApi = {
   lookupCode:   (code)                     => api.post('/staff/lookup-code',  { code }),
   earn:         (member_id, points)        => api.post('/staff/earn',         { member_id, points }),
   redeem:       (member_id, points)        => api.post('/staff/redeem',       { member_id, points }),
-  transactions: (date)                     => api.get(`/staff/transactions${date ? `?date=${date}` : ''}`),
+  transactions:       (date) => api.get(`/staff/transactions${date ? `?date=${date}` : ''}`),
+  reverseTransaction: (id)   => api.post(`/staff/transactions/${id}/reverse`),
 };
 
 export default api;

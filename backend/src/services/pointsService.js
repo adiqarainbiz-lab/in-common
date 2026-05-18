@@ -100,4 +100,68 @@ async function redeemPoints(memberId, businessId, staffId, points) {
   }
 }
 
-module.exports = { earnPoints, redeemPoints, getTier, TIERS };
+async function reverseTransaction(txId, staffId, businessId) {
+  const client = await db.getClient();
+  try {
+    await client.query('BEGIN');
+
+    const txRes = await client.query(
+      'SELECT * FROM transactions WHERE id=$1 FOR UPDATE',
+      [txId],
+    );
+    if (!txRes.rows.length) throw Object.assign(new Error('Transaction not found'), { status: 404 });
+
+    const tx = txRes.rows[0];
+
+    if (tx.type === 'reversal') throw Object.assign(new Error('Cannot reverse a reversal'), { status: 400 });
+    if (tx.type === 'expire')   throw Object.assign(new Error('Cannot reverse an expiry'), { status: 400 });
+    if (businessId && tx.business_id !== businessId)
+      throw Object.assign(new Error('Transaction not at your business'), { status: 403 });
+
+    const already = await client.query('SELECT id FROM transactions WHERE reversal_of=$1', [txId]);
+    if (already.rows.length) throw Object.assign(new Error('Transaction already reversed'), { status: 400 });
+
+    const pointsDelta = -tx.points;
+
+    if (tx.type === 'earn') {
+      const memberRes = await client.query('SELECT points_balance FROM members WHERE id=$1', [tx.member_id]);
+      const balance = memberRes.rows[0].points_balance;
+      if (balance < tx.points)
+        throw Object.assign(
+          new Error(`Cannot reverse: member only has ${balance} pts but transaction was ${tx.points} pts`),
+          { status: 400 },
+        );
+    }
+
+    await client.query(
+      `INSERT INTO transactions (member_id, business_id, staff_id, type, points, description, reversal_of)
+       VALUES ($1,$2,$3,'reversal',$4,$5,$6)`,
+      [tx.member_id, tx.business_id, staffId, pointsDelta, `Reversal of ${tx.type}`, txId],
+    );
+
+    const updated = await client.query(
+      `UPDATE members
+       SET points_balance   = points_balance + $1,
+           last_activity_at = NOW(),
+           tier = CASE
+             WHEN points_balance + $1 >= 5000 THEN 'Keffiyeh'
+             WHEN points_balance + $1 >= 2000 THEN 'Cedar'
+             WHEN points_balance + $1 >= 500  THEN 'Olive'
+             ELSE 'Seedling'
+           END
+       WHERE id = $2
+       RETURNING points_balance, tier`,
+      [pointsDelta, tx.member_id],
+    );
+
+    await client.query('COMMIT');
+    return { reversed: true, newBalance: updated.rows[0].points_balance, tier: updated.rows[0].tier };
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}
+
+module.exports = { earnPoints, redeemPoints, reverseTransaction, getTier, TIERS };

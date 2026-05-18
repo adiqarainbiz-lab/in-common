@@ -2,7 +2,7 @@ const router = require('express').Router();
 const db     = require('../config/database');
 const { authStaff } = require('../middleware/auth');
 const { validateQRToken } = require('../services/qrService');
-const { earnPoints, redeemPoints } = require('../services/pointsService');
+const { earnPoints, redeemPoints, reverseTransaction } = require('../services/pointsService');
 
 router.use(authStaff);
 
@@ -71,7 +71,8 @@ router.get('/transactions', async (req, res, next) => {
     const dayEnd   = `${date} 23:59:59`;
 
     const result = await db.query(
-      `SELECT t.id, t.type, t.amount_jd, t.points, t.description, t.created_at,
+      `SELECT t.id, t.type, t.points, t.description, t.created_at, t.reversal_of,
+              EXISTS(SELECT 1 FROM transactions r WHERE r.reversal_of = t.id) AS is_reversed,
               m.name AS member_name, m.phone_number AS member_phone, m.tier
        FROM transactions t
        LEFT JOIN members m ON t.member_id = m.id
@@ -82,14 +83,22 @@ router.get('/transactions', async (req, res, next) => {
 
     const summary = result.rows.reduce(
       (acc, t) => {
-        if (t.type === 'earn')   acc.earned   += t.points;
-        if (t.type === 'redeem') acc.redeemed += Math.abs(t.points);
+        if (t.type === 'earn'   && !t.is_reversed) acc.earned   += t.points;
+        if (t.type === 'redeem' && !t.is_reversed) acc.redeemed += Math.abs(t.points);
         return acc;
       },
       { earned: 0, redeemed: 0 },
     );
 
     res.json({ date, transactions: result.rows, summary });
+  } catch (e) { next(e); }
+});
+
+// POST /api/staff/transactions/:id/reverse
+router.post('/transactions/:id/reverse', async (req, res, next) => {
+  try {
+    const result = await reverseTransaction(req.params.id, req.staff.sub, req.staff.business_id);
+    res.json(result);
   } catch (e) { next(e); }
 });
 

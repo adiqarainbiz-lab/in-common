@@ -18,7 +18,7 @@ async function run() {
     )
   `);
 
-  const files = ['001_initial.sql', '002_seed.sql', '003_admin.sql'];
+  const files = ['001_initial.sql', '002_seed.sql', '003_admin.sql', '004_reversal.sql'];
   for (const file of files) {
     const { rows } = await pool.query('SELECT 1 FROM _migrations WHERE filename=$1', [file]);
     if (rows.length) {

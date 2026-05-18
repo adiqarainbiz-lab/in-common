@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt    = require('jsonwebtoken');
 const db     = require('../config/database');
 const { authAdmin } = require('../middleware/auth');
+const { reverseTransaction } = require('../services/pointsService');
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
@@ -169,6 +170,15 @@ router.delete('/staff/:id', authAdmin, async (req, res, next) => {
     );
     if (!result.rows.length) return res.status(404).json({ error: 'Staff not found' });
     res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+// ─── Transactions ─────────────────────────────────────────────────────────────
+
+router.post('/transactions/:id/reverse', authAdmin, async (req, res, next) => {
+  try {
+    const result = await reverseTransaction(req.params.id, req.admin.sub, null);
+    res.json(result);
   } catch (e) { next(e); }
 });
 
