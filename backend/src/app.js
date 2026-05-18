@@ -6,7 +6,19 @@ const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
-app.use(cors());
+const allowedOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
+  : ['http://localhost:4000'];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // No origin = mobile app or server-to-server — always allow
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    callback(Object.assign(new Error('CORS: origin not allowed'), { status: 403 }));
+  },
+  credentials: true,
+}));
 app.use(express.json());
 
 // Rate limiting — OTP endpoint is stricter
