@@ -235,6 +235,78 @@ router.get('/analytics', authAdmin, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// ─── Members ──────────────────────────────────────────────────────────────────
+
+router.get('/members', authAdmin, async (req, res, next) => {
+  try {
+    const q     = (req.query.q || '').trim();
+    const page  = Math.max(1, parseInt(req.query.page  || '1'));
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit || '20')));
+    const offset = (page - 1) * limit;
+
+    if (q.length > 0 && q.length < 2) {
+      return res.json({ members: [], total: 0, page, limit });
+    }
+
+    let rows, countRes;
+    if (q.length >= 2) {
+      const pat = `%${q}%`;
+      [rows, countRes] = await Promise.all([
+        db.query(
+          `SELECT id, name, phone_number, points_balance, tier, member_code, last_activity_at, created_at
+           FROM members WHERE name ILIKE $1 OR phone_number ILIKE $1
+           ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
+          [pat, limit, offset],
+        ),
+        db.query(
+          'SELECT COUNT(*) FROM members WHERE name ILIKE $1 OR phone_number ILIKE $1',
+          [pat],
+        ),
+      ]);
+    } else {
+      [rows, countRes] = await Promise.all([
+        db.query(
+          `SELECT id, name, phone_number, points_balance, tier, member_code, last_activity_at, created_at
+           FROM members ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
+          [limit, offset],
+        ),
+        db.query('SELECT COUNT(*) FROM members'),
+      ]);
+    }
+
+    res.json({ members: rows.rows, total: parseInt(countRes.rows[0].count), page, limit });
+  } catch (e) { next(e); }
+});
+
+router.get('/members/:id', authAdmin, async (req, res, next) => {
+  try {
+    const [memberRes, txRes] = await Promise.all([
+      db.query(
+        `SELECT id, name, phone_number, points_balance, tier, member_code, last_activity_at, created_at
+         FROM members WHERE id=$1`,
+        [req.params.id],
+      ),
+      db.query(
+        `SELECT t.id, t.type, t.points, t.description, t.created_at,
+                b.name AS business_name,
+                s.name AS staff_name,
+                t.reversal_of,
+                EXISTS(SELECT 1 FROM transactions r WHERE r.reversal_of = t.id) AS is_reversed
+         FROM transactions t
+         LEFT JOIN businesses b ON t.business_id = b.id
+         LEFT JOIN staff s ON t.staff_id = s.id
+         WHERE t.member_id = $1
+         ORDER BY t.created_at DESC
+         LIMIT 100`,
+        [req.params.id],
+      ),
+    ]);
+
+    if (!memberRes.rows.length) return res.status(404).json({ error: 'Member not found' });
+    res.json({ member: memberRes.rows[0], transactions: txRes.rows });
+  } catch (e) { next(e); }
+});
+
 // ─── Transactions ─────────────────────────────────────────────────────────────
 
 router.post('/transactions/:id/reverse', authAdmin, async (req, res, next) => {
