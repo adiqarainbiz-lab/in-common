@@ -94,6 +94,24 @@ router.get('/transactions', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// GET /api/staff/search?q=
+router.get('/search', async (req, res, next) => {
+  try {
+    const q = (req.query.q || '').trim();
+    if (q.length < 2) return res.json({ members: [] });
+
+    const result = await db.query(
+      `SELECT id, name, phone_number, points_balance, tier, member_code, last_activity_at
+       FROM members
+       WHERE name ILIKE $1 OR phone_number ILIKE $1
+       ORDER BY name
+       LIMIT 20`,
+      [`%${q}%`],
+    );
+    res.json({ members: result.rows });
+  } catch (e) { next(e); }
+});
+
 // POST /api/staff/transactions/:id/reverse
 router.post('/transactions/:id/reverse', async (req, res, next) => {
   try {

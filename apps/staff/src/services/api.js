@@ -36,6 +36,7 @@ export const staffApi = {
   redeem:       (member_id, points)        => api.post('/staff/redeem',       { member_id, points }),
   transactions:       (date) => api.get(`/staff/transactions${date ? `?date=${date}` : ''}`),
   reverseTransaction: (id)   => api.post(`/staff/transactions/${id}/reverse`),
+  searchMembers:      (q)    => api.get(`/staff/search?q=${encodeURIComponent(q)}`),
 };
 
 export default api;
