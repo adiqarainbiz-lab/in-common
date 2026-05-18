@@ -5,7 +5,11 @@ import api from '../api';
 
 const CATEGORIES = ['Restaurant', 'Cafe', 'Grocery', 'Bakery', 'Pharmacy', 'Clothing', 'Other'];
 
-const EMPTY_FORM = { name: '', category: '', address: '', description: '', logo_url: '', points_rate: 10 };
+const EMPTY_FORM = {
+  name: '', category: '', address: '', description: '',
+  logo_url: '', cover_url: '', points_rate: 10,
+  phone: '', website: '', instagram: '', menu_url: '', hours: '', discounts: '',
+};
 
 export default function Businesses() {
   const navigate = useNavigate();
@@ -37,7 +41,9 @@ export default function Businesses() {
     setForm({
       name: b.name, category: b.category, address: b.address || '',
       description: b.description || '', logo_url: b.logo_url || '',
-      points_rate: b.points_rate,
+      cover_url: b.cover_url || '', points_rate: b.points_rate,
+      phone: b.phone || '', website: b.website || '', instagram: b.instagram || '',
+      menu_url: b.menu_url || '', hours: b.hours || '', discounts: b.discounts || '',
     });
     setFormError('');
     setModal(b);
@@ -151,7 +157,7 @@ export default function Businesses() {
               <button className="modal-close" onClick={() => setModal(null)}>×</button>
             </div>
             <form onSubmit={handleSave}>
-              <div className="modal-body">
+              <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
                 {formError && <div className="error-msg">{formError}</div>}
                 <div className="row">
                   <div className="form-group">
@@ -173,6 +179,62 @@ export default function Businesses() {
                 <div className="form-group">
                   <label>Description</label>
                   <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+                </div>
+                <div className="form-group">
+                  <label>Cover Photo URL</label>
+                  <input
+                    value={form.cover_url}
+                    onChange={e => setForm(f => ({ ...f, cover_url: e.target.value }))}
+                    placeholder="https://…  paste any image URL"
+                  />
+                  {form.cover_url && (
+                    <div style={{ marginTop: 8, borderRadius: 8, overflow: 'hidden', height: 160, background: '#f0f0f0' }}>
+                      <img
+                        src={form.cover_url}
+                        alt="Cover preview"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                        onError={e => { e.target.style.display = 'none'; }}
+                        onLoad={e => { e.target.style.display = 'block'; }}
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className="form-group">
+                  <label>Working Hours</label>
+                  <input
+                    value={form.hours}
+                    onChange={e => setForm(f => ({ ...f, hours: e.target.value }))}
+                    placeholder="e.g. Mon–Fri: 9 AM – 10 PM, Sat–Sun: 10 AM – 11 PM"
+                  />
+                </div>
+                <div className="row">
+                  <div className="form-group">
+                    <label>Phone</label>
+                    <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+972…" />
+                  </div>
+                  <div className="form-group">
+                    <label>Instagram</label>
+                    <input value={form.instagram} onChange={e => setForm(f => ({ ...f, instagram: e.target.value }))} placeholder="@handle" />
+                  </div>
+                </div>
+                <div className="row">
+                  <div className="form-group">
+                    <label>Website</label>
+                    <input value={form.website} onChange={e => setForm(f => ({ ...f, website: e.target.value }))} placeholder="https://…" />
+                  </div>
+                  <div className="form-group">
+                    <label>Menu URL</label>
+                    <input value={form.menu_url} onChange={e => setForm(f => ({ ...f, menu_url: e.target.value }))} placeholder="https://…" />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>Discounts & Offers</label>
+                  <textarea
+                    value={form.discounts}
+                    onChange={e => setForm(f => ({ ...f, discounts: e.target.value }))}
+                    placeholder="One offer per line, e.g.&#10;10% off all drinks for members&#10;Free coffee with any pastry on Fridays"
+                    style={{ minHeight: 80 }}
+                  />
                 </div>
                 <div className="row">
                   <div className="form-group">

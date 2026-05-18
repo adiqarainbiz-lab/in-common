@@ -9,7 +9,8 @@ import HomeScreen        from '../screens/HomeScreen';
 import QRScreen          from '../screens/QRScreen';
 import BusinessesScreen  from '../screens/BusinessesScreen';
 import HistoryScreen     from '../screens/HistoryScreen';
-import EditProfileScreen from '../screens/EditProfileScreen';
+import EditProfileScreen      from '../screens/EditProfileScreen';
+import BusinessDetailScreen  from '../screens/BusinessDetailScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab   = createBottomTabNavigator();
@@ -58,22 +59,26 @@ export default function AppNavigator() {
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {token ? (
           <>
-            <Stack.Screen name="Main" component={Tabs} />
-            <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+            <Stack.Screen name="Main"           component={Tabs} />
+            <Stack.Screen name="EditProfile"    component={EditProfileScreen} />
+            <Stack.Screen name="BusinessDetail" component={BusinessDetailScreen} options={{ headerShown: false }} />
           </>
         ) : isGuest ? (
-          <Stack.Screen
-            name="Guest"
-            component={BusinessesScreen}
-            options={{
-              headerShown: true,
-              title: 'Partner Businesses',
-              headerRight: () => <GuestSignInButton />,
-              headerStyle: { backgroundColor: '#F5F7F5' },
-              headerTitleStyle: { color: '#1B4332', fontWeight: '800' },
-              headerShadowVisible: false,
-            }}
-          />
+          <>
+            <Stack.Screen
+              name="Guest"
+              component={BusinessesScreen}
+              options={{
+                headerShown: true,
+                title: 'Partner Businesses',
+                headerRight: () => <GuestSignInButton />,
+                headerStyle: { backgroundColor: '#F5F7F5' },
+                headerTitleStyle: { color: '#1B4332', fontWeight: '800' },
+                headerShadowVisible: false,
+              }}
+            />
+            <Stack.Screen name="BusinessDetail" component={BusinessDetailScreen} options={{ headerShown: false }} />
+          </>
         ) : (
           <Stack.Screen name="Auth" component={AuthScreen} />
         )}

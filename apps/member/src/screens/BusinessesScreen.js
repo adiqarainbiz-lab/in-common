@@ -17,13 +17,13 @@ const CATEGORIES = [
 const CATEGORY_LABEL = { food: 'Food & Drink', services: 'Services', shop: 'Shop' };
 const CATEGORY_EMOJI = { food: '🍽️', services: '✂️', shop: '🛍️' };
 
-function BusinessCard({ item }) {
+function BusinessCard({ item, onPress }) {
   const [imgError, setImgError] = useState(false);
   const label = CATEGORY_LABEL[item.category] || item.category;
   const emoji = CATEGORY_EMOJI[item.category] || '🏪';
 
   return (
-    <View style={styles.card}>
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
       {/* Cover */}
       <View style={styles.coverWrap}>
         {item.cover_url && !imgError ? (
@@ -63,11 +63,11 @@ function BusinessCard({ item }) {
           <Text style={styles.cardDesc} numberOfLines={2}>{item.description}</Text>
         )}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
-export default function BusinessesScreen() {
+export default function BusinessesScreen({ navigation }) {
   const { token } = useAuth();
   const [category,   setCategory]   = useState(null);
   const [businesses, setBusinesses] = useState([]);
@@ -118,7 +118,12 @@ export default function BusinessesScreen() {
         <FlatList
           data={businesses}
           keyExtractor={(i) => i.id}
-          renderItem={({ item }) => <BusinessCard item={item} />}
+          renderItem={({ item }) => (
+            <BusinessCard
+              item={item}
+              onPress={() => navigation.navigate('BusinessDetail', { businessId: item.id })}
+            />
+          )}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
           refreshControl={

@@ -47,13 +47,18 @@ router.get('/businesses', authAdmin, async (req, res, next) => {
 
 router.post('/businesses', authAdmin, async (req, res, next) => {
   try {
-    const { name, category, address, description, logo_url, points_rate } = req.body;
+    const { name, category, address, description, logo_url, cover_url, points_rate,
+            phone, website, instagram, menu_url, hours, discounts } = req.body;
     if (!name || !category) return res.status(400).json({ error: 'name and category required' });
 
     const result = await db.query(
-      `INSERT INTO businesses (name, category, address, description, logo_url, points_rate)
-       VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-      [name, category, address || null, description || null, logo_url || null, points_rate || 10],
+      `INSERT INTO businesses
+         (name, category, address, description, logo_url, cover_url, points_rate,
+          phone, website, instagram, menu_url, hours, discounts)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
+      [name, category, address || null, description || null, logo_url || null,
+       cover_url || null, points_rate || 10, phone || null, website || null,
+       instagram || null, menu_url || null, hours || null, discounts || null],
     );
     res.status(201).json(result.rows[0]);
   } catch (e) { next(e); }
@@ -65,21 +70,30 @@ router.patch('/businesses/:id', authAdmin, async (req, res, next) => {
     if (!existing.rows.length) return res.status(404).json({ error: 'Business not found' });
 
     const b = existing.rows[0];
-    const { name, category, address, description, logo_url, points_rate, is_active } = req.body;
+    const { name, category, address, description, logo_url, cover_url, points_rate,
+            phone, website, instagram, menu_url, hours, discounts, is_active } = req.body;
 
     const result = await db.query(
       `UPDATE businesses
        SET name=$1, category=$2, address=$3, description=$4,
-           logo_url=$5, points_rate=$6, is_active=$7
-       WHERE id=$8 RETURNING *`,
+           logo_url=$5, cover_url=$6, points_rate=$7, is_active=$8,
+           phone=$9, website=$10, instagram=$11, menu_url=$12, hours=$13, discounts=$14
+       WHERE id=$15 RETURNING *`,
       [
         name        ?? b.name,
         category    ?? b.category,
         address     ?? b.address,
         description ?? b.description,
         logo_url    ?? b.logo_url,
+        cover_url   ?? b.cover_url,
         points_rate ?? b.points_rate,
         is_active   ?? b.is_active,
+        phone       ?? b.phone,
+        website     ?? b.website,
+        instagram   ?? b.instagram,
+        menu_url    ?? b.menu_url,
+        hours       ?? b.hours,
+        discounts   ?? b.discounts,
         req.params.id,
       ],
     );
