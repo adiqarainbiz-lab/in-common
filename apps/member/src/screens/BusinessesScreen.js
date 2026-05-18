@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { member as memberApi } from '../services/api';
+import { member as memberApi, pub as pubApi } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const CATEGORIES = [
   { key: null,       label: 'All',      emoji: '🏙️' },
@@ -30,6 +31,7 @@ function BusinessCard({ item }) {
 }
 
 export default function BusinessesScreen() {
+  const { token } = useAuth();
   const [category,    setCategory]    = useState(null);
   const [businesses,  setBusinesses]  = useState([]);
   const [loading,     setLoading]     = useState(true);
@@ -38,7 +40,7 @@ export default function BusinessesScreen() {
   const load = async (cat, pull = false) => {
     if (pull) setRefreshing(true); else setLoading(true);
     try {
-      const res = await memberApi.businesses(cat);
+      const res = token ? await memberApi.businesses(cat) : await pubApi.businesses(cat);
       setBusinesses(res.data);
     } catch {} finally {
       setLoading(false);

@@ -23,4 +23,8 @@ export const member = {
   businesses:   (category) => api.get(`/member/businesses${category ? `?category=${category}` : ''}`),
 };
 
+export const pub = {
+  businesses: (category) => api.get(`/businesses${category ? `?category=${category}` : ''}`),
+};
+
 export default api;

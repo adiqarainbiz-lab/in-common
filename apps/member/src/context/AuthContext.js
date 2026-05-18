@@ -8,6 +8,7 @@ export function AuthProvider({ children }) {
   const [token,   setToken]   = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -46,6 +47,9 @@ export function AuthProvider({ children }) {
     setProfile(null);
   };
 
+  const continueAsGuest = () => setIsGuest(true);
+  const exitGuest = () => setIsGuest(false);
+
   const refreshProfile = async () => {
     const res = await memberApi.profile();
     setProfile(res.data);
@@ -53,7 +57,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ token, profile, loading, requestOTP, login, logout, refreshProfile }}>
+    <AuthContext.Provider value={{ token, profile, loading, isGuest, requestOTP, login, logout, refreshProfile, continueAsGuest, exitGuest }}>
       {children}
     </AuthContext.Provider>
   );

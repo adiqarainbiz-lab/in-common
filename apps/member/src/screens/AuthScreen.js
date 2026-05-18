@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
-  StyleSheet, KeyboardAvoidingView, Platform, Alert, ActivityIndicator,
+  StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
@@ -9,18 +9,26 @@ import { useAuth } from '../context/AuthContext';
 const STEPS = { PHONE: 'phone', OTP: 'otp', NAME: 'name' };
 
 export default function AuthScreen() {
-  const { requestOTP, login } = useAuth();
-  const [step,     setStep]     = useState(STEPS.PHONE);
-  const [phone,    setPhone]    = useState('');
-  const [otp,      setOtp]      = useState('');
-  const [name,     setName]     = useState('');
-  const [isNew,    setIsNew]    = useState(false);
-  const [loading,  setLoading]  = useState(false);
-  const [devOtp,   setDevOtp]   = useState('');
-  const [error,    setError]    = useState('');
+  const { requestOTP, login, continueAsGuest } = useAuth();
+  const [mode,    setMode]    = useState('signin'); // 'signin' | 'signup'
+  const [step,    setStep]    = useState(STEPS.PHONE);
+  const [phone,   setPhone]   = useState('');
+  const [otp,     setOtp]     = useState('');
+  const [name,    setName]    = useState('');
+  const [loading, setLoading] = useState(false);
+  const [devOtp,  setDevOtp]  = useState('');
+  const [error,   setError]   = useState('');
+
+  function switchMode(next) {
+    setMode(next);
+    setStep(STEPS.PHONE);
+    setPhone(''); setOtp(''); setName('');
+    setError(''); setDevOtp('');
+  }
 
   const handlePhone = async () => {
     if (!phone.trim()) return setError('Enter your phone number');
+    if (mode === 'signup' && !name.trim()) return setError('Enter your name');
     setError('');
     setLoading(true);
     try {
@@ -37,11 +45,11 @@ export default function AuthScreen() {
     setError('');
     setLoading(true);
     try {
-      await login(phone.trim(), otp.trim(), undefined);
+      // For sign-up, pass name now. For sign-in, pass undefined and handle name-required below.
+      await login(phone.trim(), otp.trim(), mode === 'signup' ? name.trim() : undefined);
     } catch (e) {
       const errMsg = e.response?.data?.error || '';
       if (errMsg.includes('name required')) {
-        setIsNew(true);
         setStep(STEPS.NAME);
       } else {
         setError(errMsg || 'Invalid OTP');
@@ -67,16 +75,49 @@ export default function AuthScreen() {
         <Text style={styles.tagline}>Community loyalty for Jerusalem</Text>
 
         <View style={styles.card}>
+          {/* Sign In / Sign Up tabs */}
+          {step === STEPS.PHONE && (
+            <View style={styles.modeTabs}>
+              <TouchableOpacity
+                style={[styles.modeTab, mode === 'signin' && styles.modeTabActive]}
+                onPress={() => switchMode('signin')}
+              >
+                <Text style={[styles.modeTabText, mode === 'signin' && styles.modeTabTextActive]}>Sign In</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modeTab, mode === 'signup' && styles.modeTabActive]}
+                onPress={() => switchMode('signup')}
+              >
+                <Text style={[styles.modeTabText, mode === 'signup' && styles.modeTabTextActive]}>Sign Up</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           {step === STEPS.PHONE && (
             <>
-              <Text style={styles.label}>Your phone number</Text>
+              {mode === 'signup' && (
+                <>
+                  <Text style={styles.label}>Your name</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Full name"
+                    value={name}
+                    onChangeText={v => { setName(v); setError(''); }}
+                    autoCapitalize="words"
+                    returnKeyType="next"
+                  />
+                </>
+              )}
+              <Text style={styles.label}>
+                {mode === 'signup' ? 'Your phone number' : 'Welcome back — your phone number'}
+              </Text>
               <TextInput
                 style={styles.input}
                 placeholder="+972 50 000 0000"
                 value={phone}
                 onChangeText={v => { setPhone(v); setError(''); }}
                 keyboardType="phone-pad"
-                autoFocus
+                autoFocus={mode === 'signin'}
                 onSubmitEditing={handlePhone}
                 returnKeyType="go"
               />
@@ -107,10 +148,10 @@ export default function AuthScreen() {
               {error ? <Text style={styles.error}>{error}</Text> : null}
               {loading ? <ActivityIndicator color="#2D6A4F" /> : (
                 <TouchableOpacity style={styles.btn} onPress={handleOTP}>
-                  <Text style={styles.btnText}>Verify</Text>
+                  <Text style={styles.btnText}>{mode === 'signup' ? 'Join In Common' : 'Verify'}</Text>
                 </TouchableOpacity>
               )}
-              <TouchableOpacity onPress={() => { setStep(STEPS.PHONE); setError(''); }}>
+              <TouchableOpacity onPress={() => { setStep(STEPS.PHONE); setOtp(''); setError(''); }}>
                 <Text style={styles.back}>← Change number</Text>
               </TouchableOpacity>
             </>
@@ -139,6 +180,10 @@ export default function AuthScreen() {
           )}
         </View>
 
+        <TouchableOpacity onPress={continueAsGuest} style={styles.guestBtn}>
+          <Text style={styles.guestText}>Browse as guest →</Text>
+        </TouchableOpacity>
+
         <Text style={styles.footer}>No bank account required</Text>
       </KeyboardAvoidingView>
     </LinearGradient>
@@ -146,18 +191,25 @@ export default function AuthScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  inner:     { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
-  logo:      { fontSize: 36, fontWeight: '800', color: '#FFFFFF', textAlign: 'center', marginBottom: 6 },
-  tagline:   { fontSize: 15, color: '#FFFFFF99', textAlign: 'center', marginBottom: 40 },
-  card:      { backgroundColor: 'white', borderRadius: 20, padding: 24, gap: 16 },
-  label:     { fontSize: 15, color: '#1B4332', fontWeight: '600' },
-  input:     { borderWidth: 1, borderColor: '#D0E8D8', borderRadius: 12, padding: 14, fontSize: 16 },
-  otpInput:  { textAlign: 'center', letterSpacing: 8, fontSize: 24, fontWeight: '700' },
-  btn:       { backgroundColor: '#2D6A4F', borderRadius: 12, paddingVertical: 16, alignItems: 'center' },
-  btnText:   { color: 'white', fontSize: 16, fontWeight: '700' },
-  back:      { textAlign: 'center', color: '#2D6A4F', fontSize: 14 },
-  devHint:   { backgroundColor: '#FFF3CD', padding: 8, borderRadius: 8, fontSize: 13, color: '#856404', textAlign: 'center' },
-  footer:    { textAlign: 'center', color: '#FFFFFF66', marginTop: 32, fontSize: 13 },
-  error:     { color: '#D62828', fontSize: 13, textAlign: 'center' },
+  container:        { flex: 1 },
+  inner:            { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
+  logo:             { fontSize: 36, fontWeight: '800', color: '#FFFFFF', textAlign: 'center', marginBottom: 6 },
+  tagline:          { fontSize: 15, color: '#FFFFFF99', textAlign: 'center', marginBottom: 40 },
+  card:             { backgroundColor: 'white', borderRadius: 20, padding: 24, gap: 16 },
+  modeTabs:         { flexDirection: 'row', backgroundColor: '#F0F4F0', borderRadius: 12, padding: 4 },
+  modeTab:          { flex: 1, paddingVertical: 9, borderRadius: 9, alignItems: 'center' },
+  modeTabActive:    { backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 },
+  modeTabText:      { fontSize: 14, fontWeight: '600', color: '#888' },
+  modeTabTextActive:{ color: '#1B4332' },
+  label:            { fontSize: 15, color: '#1B4332', fontWeight: '600' },
+  input:            { borderWidth: 1, borderColor: '#D0E8D8', borderRadius: 12, padding: 14, fontSize: 16 },
+  otpInput:         { textAlign: 'center', letterSpacing: 8, fontSize: 24, fontWeight: '700' },
+  btn:              { backgroundColor: '#2D6A4F', borderRadius: 12, paddingVertical: 16, alignItems: 'center' },
+  btnText:          { color: 'white', fontSize: 16, fontWeight: '700' },
+  back:             { textAlign: 'center', color: '#2D6A4F', fontSize: 14 },
+  devHint:          { backgroundColor: '#FFF3CD', padding: 8, borderRadius: 8, fontSize: 13, color: '#856404', textAlign: 'center' },
+  guestBtn:         { marginTop: 20, alignItems: 'center', paddingVertical: 8 },
+  guestText:        { color: '#FFFFFFCC', fontSize: 15, fontWeight: '500' },
+  footer:           { textAlign: 'center', color: '#FFFFFF66', marginTop: 16, fontSize: 13 },
+  error:            { color: '#D62828', fontSize: 13, textAlign: 'center' },
 });

@@ -1,14 +1,14 @@
 import React from 'react';
+import { TouchableOpacity, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import AuthScreen      from '../screens/AuthScreen';
-import HomeScreen      from '../screens/HomeScreen';
-import QRScreen        from '../screens/QRScreen';
+import AuthScreen       from '../screens/AuthScreen';
+import HomeScreen       from '../screens/HomeScreen';
+import QRScreen         from '../screens/QRScreen';
 import BusinessesScreen from '../screens/BusinessesScreen';
-import HistoryScreen   from '../screens/HistoryScreen';
+import HistoryScreen    from '../screens/HistoryScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab   = createBottomTabNavigator();
@@ -39,8 +39,17 @@ function Tabs() {
   );
 }
 
+function GuestSignInButton() {
+  const { exitGuest } = useAuth();
+  return (
+    <TouchableOpacity onPress={exitGuest} style={{ marginRight: 16 }}>
+      <Text style={{ color: '#2D6A4F', fontWeight: '700', fontSize: 15 }}>Sign In</Text>
+    </TouchableOpacity>
+  );
+}
+
 export default function AppNavigator() {
-  const { token, loading } = useAuth();
+  const { token, isGuest, loading } = useAuth();
   if (loading) return null;
 
   return (
@@ -48,6 +57,19 @@ export default function AppNavigator() {
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {token ? (
           <Stack.Screen name="Main" component={Tabs} />
+        ) : isGuest ? (
+          <Stack.Screen
+            name="Guest"
+            component={BusinessesScreen}
+            options={{
+              headerShown: true,
+              title: 'Partner Businesses',
+              headerRight: () => <GuestSignInButton />,
+              headerStyle: { backgroundColor: '#F5F7F5' },
+              headerTitleStyle: { color: '#1B4332', fontWeight: '800' },
+              headerShadowVisible: false,
+            }}
+          />
         ) : (
           <Stack.Screen name="Auth" component={AuthScreen} />
         )}
