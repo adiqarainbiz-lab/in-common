@@ -56,8 +56,14 @@ export function AuthProvider({ children }) {
     return res.data;
   };
 
+  const updateProfile = async (name, phone_number) => {
+    const res = await memberApi.updateProfile(name, phone_number);
+    setProfile(res.data);
+    return res.data;
+  };
+
   return (
-    <AuthContext.Provider value={{ token, profile, loading, isGuest, requestOTP, login, logout, refreshProfile, continueAsGuest, exitGuest }}>
+    <AuthContext.Provider value={{ token, profile, loading, isGuest, requestOTP, login, logout, refreshProfile, updateProfile, continueAsGuest, exitGuest }}>
       {children}
     </AuthContext.Provider>
   );

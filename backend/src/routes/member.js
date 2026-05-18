@@ -19,6 +19,34 @@ router.get('/profile', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// PATCH /api/member/profile
+router.patch('/profile', async (req, res, next) => {
+  try {
+    const { name, phone_number } = req.body;
+    if (!name && !phone_number) return res.status(400).json({ error: 'Provide name or phone_number to update' });
+
+    const existing = await db.query('SELECT * FROM members WHERE id=$1', [req.member.sub]);
+    if (!existing.rows.length) return res.status(404).json({ error: 'Member not found' });
+    const m = existing.rows[0];
+
+    if (phone_number && phone_number !== m.phone_number) {
+      const taken = await db.query(
+        'SELECT id FROM members WHERE phone_number=$1 AND id!=$2',
+        [phone_number, req.member.sub],
+      );
+      if (taken.rows.length) return res.status(409).json({ error: 'Phone number already in use' });
+    }
+
+    const result = await db.query(
+      `UPDATE members SET name=$1, phone_number=$2
+       WHERE id=$3
+       RETURNING id, phone_number, name, points_balance, tier, member_code, last_activity_at, created_at`,
+      [name ?? m.name, phone_number ?? m.phone_number, req.member.sub],
+    );
+    res.json(result.rows[0]);
+  } catch (e) { next(e); }
+});
+
 // GET /api/member/qr-token — rotating QR, valid ~90s
 router.get('/qr-token', async (req, res, next) => {
   try {

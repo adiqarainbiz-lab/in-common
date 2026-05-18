@@ -33,9 +33,14 @@ export default function HomeScreen({ navigation }) {
         <LinearGradient colors={['#1B4332', '#2D6A4F']} style={styles.header}>
           <View style={styles.headerTop}>
             <Text style={styles.greeting}>مرحبا، {profile.name}</Text>
-            <TouchableOpacity onPress={logout}>
-              <Text style={styles.logoutText}>Sign out</Text>
-            </TouchableOpacity>
+            <View style={styles.headerActions}>
+              <TouchableOpacity onPress={() => navigation.navigate('EditProfile')}>
+                <Text style={styles.editText}>✏️ Edit</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={logout}>
+                <Text style={styles.logoutText}>Sign out</Text>
+              </TouchableOpacity>
+            </View>
           </View>
           <TierBadge tier={profile.tier} size="lg" />
         </LinearGradient>
@@ -109,6 +114,8 @@ const styles = StyleSheet.create({
   header:          { padding: 24, paddingTop: 32, gap: 16 },
   headerTop:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   greeting:        { color: 'white', fontSize: 20, fontWeight: '700' },
+  headerActions:   { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  editText:        { color: '#FFFFFFCC', fontSize: 14 },
   logoutText:      { color: '#FFFFFF88', fontSize: 14 },
   pointsCard:      { margin: 16, backgroundColor: 'white', borderRadius: 20, padding: 24, elevation: 3, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 12 },
   pointsLabel:     { color: '#666', fontSize: 14, marginBottom: 4 },

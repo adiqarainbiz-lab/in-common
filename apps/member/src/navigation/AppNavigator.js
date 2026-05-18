@@ -4,11 +4,12 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuth } from '../context/AuthContext';
-import AuthScreen       from '../screens/AuthScreen';
-import HomeScreen       from '../screens/HomeScreen';
-import QRScreen         from '../screens/QRScreen';
-import BusinessesScreen from '../screens/BusinessesScreen';
-import HistoryScreen    from '../screens/HistoryScreen';
+import AuthScreen        from '../screens/AuthScreen';
+import HomeScreen        from '../screens/HomeScreen';
+import QRScreen          from '../screens/QRScreen';
+import BusinessesScreen  from '../screens/BusinessesScreen';
+import HistoryScreen     from '../screens/HistoryScreen';
+import EditProfileScreen from '../screens/EditProfileScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab   = createBottomTabNavigator();
@@ -56,7 +57,10 @@ export default function AppNavigator() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {token ? (
-          <Stack.Screen name="Main" component={Tabs} />
+          <>
+            <Stack.Screen name="Main" component={Tabs} />
+            <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+          </>
         ) : isGuest ? (
           <Stack.Screen
             name="Guest"
