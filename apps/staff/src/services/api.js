@@ -37,6 +37,7 @@ export const staffApi = {
   transactions:       (date) => api.get(`/staff/transactions${date ? `?date=${date}` : ''}`),
   reverseTransaction: (id)   => api.post(`/staff/transactions/${id}/reverse`),
   searchMembers:      (q)    => api.get(`/staff/search?q=${encodeURIComponent(q)}`),
+  analytics:          ()     => api.get('/staff/analytics'),
 };
 
 export default api;

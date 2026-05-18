@@ -9,6 +9,7 @@ import ScannerScreen      from '../screens/ScannerScreen';
 import SearchScreen       from '../screens/SearchScreen';
 import MemberScreen       from '../screens/MemberScreen';
 import TransactionsScreen from '../screens/TransactionsScreen';
+import AnalyticsScreen    from '../screens/AnalyticsScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab   = createBottomTabNavigator();
@@ -22,11 +23,11 @@ function MainTabs() {
         tabBarInactiveTintColor: '#AAA',
         tabBarStyle: { borderTopWidth: 0, elevation: 16 },
         tabBarIcon: ({ color }) => {
-          const icons = { Scan: '📷', Search: '🔍', Transactions: '📊' };
+          const icons = { Scan: '📷', Search: '🔍', Transactions: '📊', Insights: '📈' };
           return <Text style={{ fontSize: 22 }}>{icons[route.name]}</Text>;
         },
         tabBarLabel: ({ color }) => {
-          const labels = { Scan: 'Scan', Search: 'Search', Transactions: 'Log' };
+          const labels = { Scan: 'Scan', Search: 'Search', Transactions: 'Log', Insights: 'Insights' };
           return <Text style={{ color, fontSize: 11, fontWeight: '600' }}>{labels[route.name]}</Text>;
         },
       })}
@@ -34,6 +35,7 @@ function MainTabs() {
       <Tab.Screen name="Scan"         component={ScannerScreen} />
       <Tab.Screen name="Search"       component={SearchScreen} />
       <Tab.Screen name="Transactions" component={TransactionsScreen} />
+      <Tab.Screen name="Insights"     component={AnalyticsScreen} />
     </Tab.Navigator>
   );
 }

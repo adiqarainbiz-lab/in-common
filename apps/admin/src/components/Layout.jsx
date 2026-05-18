@@ -19,6 +19,7 @@ export default function Layout({ title, actions, children }) {
         </div>
         <nav className="sidebar-nav">
           <NavLink to="/" end>Businesses</NavLink>
+          <NavLink to="/analytics">Analytics</NavLink>
         </nav>
         <div className="sidebar-footer">
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 8 }}>

@@ -173,6 +173,68 @@ router.delete('/staff/:id', authAdmin, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// ─── Analytics ───────────────────────────────────────────────────────────────
+
+router.get('/analytics', authAdmin, async (req, res, next) => {
+  try {
+    const [membersRes, pointsRes, txRes, topBizRes, memberDailyRes] = await Promise.all([
+      db.query(`
+        SELECT COUNT(*) AS total,
+               COUNT(*) FILTER (WHERE created_at >= DATE_TRUNC('month', NOW())) AS this_month,
+               COUNT(*) FILTER (WHERE created_at >= DATE_TRUNC('week',  NOW())) AS this_week
+        FROM members
+      `),
+      db.query(`SELECT COALESCE(SUM(points_balance), 0) AS in_circulation FROM members`),
+      db.query(`
+        SELECT COUNT(*) AS count
+        FROM transactions t
+        LEFT JOIN transactions rev ON rev.reversal_of = t.id
+        WHERE t.type IN ('earn','redeem') AND rev.id IS NULL
+          AND t.created_at >= NOW() - INTERVAL '30 days'
+      `),
+      db.query(`
+        SELECT b.name, b.category,
+               COUNT(t.id)              AS transactions,
+               COALESCE(SUM(t.points), 0) AS points_issued,
+               COUNT(DISTINCT t.member_id) AS unique_members
+        FROM businesses b
+        LEFT JOIN transactions t ON t.business_id = b.id
+          AND t.type = 'earn'
+          AND t.created_at >= NOW() - INTERVAL '30 days'
+        WHERE b.is_active = TRUE
+        GROUP BY b.id, b.name, b.category
+        ORDER BY transactions DESC
+        LIMIT 5
+      `),
+      db.query(`
+        SELECT DATE(created_at) AS date, COUNT(*) AS count
+        FROM members
+        WHERE created_at >= NOW() - INTERVAL '30 days'
+        GROUP BY DATE(created_at)
+        ORDER BY date
+      `),
+    ]);
+
+    const membersByDay = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      const row = memberDailyRes.rows.find(r => r.date.toISOString().slice(0, 10) === key);
+      membersByDay.push({ date: key, count: row ? parseInt(row.count) : 0 });
+    }
+
+    const m = membersRes.rows[0];
+    res.json({
+      members:               { total: +m.total, this_month: +m.this_month, this_week: +m.this_week },
+      points_in_circulation: +pointsRes.rows[0].in_circulation,
+      transactions_30d:      +txRes.rows[0].count,
+      top_businesses:        topBizRes.rows.map(r => ({ ...r, transactions: +r.transactions, points_issued: +r.points_issued, unique_members: +r.unique_members })),
+      members_by_day:        membersByDay,
+    });
+  } catch (e) { next(e); }
+});
+
 // ─── Transactions ─────────────────────────────────────────────────────────────
 
 router.post('/transactions/:id/reverse', authAdmin, async (req, res, next) => {

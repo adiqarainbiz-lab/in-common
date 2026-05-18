@@ -94,6 +94,80 @@ router.get('/transactions', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// GET /api/staff/analytics
+router.get('/analytics', async (req, res, next) => {
+  try {
+    const biz = req.staff.business_id;
+
+    const [summaryRes, dailyRes, topRes] = await Promise.all([
+      db.query(`
+        SELECT
+          COALESCE(SUM(t.points)      FILTER (WHERE t.type='earn'   AND t.created_at >= DATE_TRUNC('week',  NOW())), 0) AS week_earned,
+          COALESCE(SUM(ABS(t.points)) FILTER (WHERE t.type='redeem' AND t.created_at >= DATE_TRUNC('week',  NOW())), 0) AS week_redeemed,
+          COUNT(*)                    FILTER (WHERE t.type IN ('earn','redeem') AND t.created_at >= DATE_TRUNC('week',  NOW()))  AS week_transactions,
+          COUNT(DISTINCT t.member_id) FILTER (WHERE t.type IN ('earn','redeem') AND t.created_at >= DATE_TRUNC('week',  NOW()))  AS week_members,
+          COALESCE(SUM(t.points)      FILTER (WHERE t.type='earn'   AND t.created_at >= DATE_TRUNC('month', NOW())), 0) AS month_earned,
+          COALESCE(SUM(ABS(t.points)) FILTER (WHERE t.type='redeem' AND t.created_at >= DATE_TRUNC('month', NOW())), 0) AS month_redeemed,
+          COUNT(*)                    FILTER (WHERE t.type IN ('earn','redeem') AND t.created_at >= DATE_TRUNC('month', NOW())) AS month_transactions,
+          COUNT(DISTINCT t.member_id) FILTER (WHERE t.type IN ('earn','redeem') AND t.created_at >= DATE_TRUNC('month', NOW())) AS month_members
+        FROM transactions t
+        LEFT JOIN transactions rev ON rev.reversal_of = t.id
+        WHERE t.business_id=$1 AND rev.id IS NULL
+      `, [biz]),
+
+      db.query(`
+        SELECT DATE(t.created_at) AS date,
+               COALESCE(SUM(t.points)      FILTER (WHERE t.type='earn'),   0) AS earned,
+               COALESCE(SUM(ABS(t.points)) FILTER (WHERE t.type='redeem'), 0) AS redeemed,
+               COUNT(*)                    FILTER (WHERE t.type IN ('earn','redeem'))  AS transactions
+        FROM transactions t
+        LEFT JOIN transactions rev ON rev.reversal_of = t.id
+        WHERE t.business_id=$1 AND rev.id IS NULL
+          AND t.created_at >= NOW() - INTERVAL '7 days'
+        GROUP BY DATE(t.created_at)
+        ORDER BY date
+      `, [biz]),
+
+      db.query(`
+        SELECT m.name, m.tier,
+               SUM(t.points) AS points_earned,
+               COUNT(*)      AS visit_count
+        FROM transactions t
+        JOIN members m ON t.member_id = m.id
+        LEFT JOIN transactions rev ON rev.reversal_of = t.id
+        WHERE t.business_id=$1 AND t.type='earn' AND rev.id IS NULL
+          AND t.created_at >= DATE_TRUNC('month', NOW())
+        GROUP BY m.id, m.name, m.tier
+        ORDER BY points_earned DESC
+        LIMIT 5
+      `, [biz]),
+    ]);
+
+    // Fill gaps so client always gets 7 days
+    const daily = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      const row = dailyRes.rows.find(r => r.date.toISOString().slice(0, 10) === key);
+      daily.push({
+        date: key,
+        earned:       row ? parseInt(row.earned)       : 0,
+        redeemed:     row ? parseInt(row.redeemed)     : 0,
+        transactions: row ? parseInt(row.transactions) : 0,
+      });
+    }
+
+    const s = summaryRes.rows[0];
+    res.json({
+      week:  { earned: +s.week_earned,  redeemed: +s.week_redeemed,  transactions: +s.week_transactions,  members: +s.week_members  },
+      month: { earned: +s.month_earned, redeemed: +s.month_redeemed, transactions: +s.month_transactions, members: +s.month_members },
+      daily,
+      top_members: topRes.rows.map(r => ({ ...r, points_earned: +r.points_earned, visit_count: +r.visit_count })),
+    });
+  } catch (e) { next(e); }
+});
+
 // GET /api/staff/search?q=
 router.get('/search', async (req, res, next) => {
   try {

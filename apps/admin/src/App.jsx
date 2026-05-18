@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Businesses from './pages/Businesses';
 import BusinessDetail from './pages/BusinessDetail';
+import Analytics from './pages/Analytics';
 
 function PrivateRoute({ children }) {
   return localStorage.getItem('admin_token') ? children : <Navigate to="/login" replace />;
@@ -14,6 +15,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<PrivateRoute><Businesses /></PrivateRoute>} />
         <Route path="/businesses/:id" element={<PrivateRoute><BusinessDetail /></PrivateRoute>} />
+        <Route path="/analytics" element={<PrivateRoute><Analytics /></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
