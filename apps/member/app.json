@@ -17,7 +17,17 @@
       "adaptiveIcon": {
         "backgroundColor": "#2D6A4F"
       },
-      "package": "ps.incommon.member"
-    }
+      "package": "ps.incommon.member",
+      "googleServicesFile": "./google-services.json"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#2D6A4F"
+        }
+      ]
+    ]
   }
 }

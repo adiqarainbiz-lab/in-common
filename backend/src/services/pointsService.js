@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const { sendPushNotification } = require('./notificationService');
 
 const TIERS = [
   { name: 'Seedling', min: 0    },
@@ -22,6 +23,8 @@ const TIER_SQL = `CASE
   ELSE 'Seedling'
 END`;
 
+const TIER_EMOJI = { Seedling: '🌱', Olive: '🫒', Cedar: '🌲', Keffiyeh: '🏅' };
+
 async function earnPoints(memberId, businessId, staffId, points, description) {
   if (!Number.isInteger(points) || points <= 0)
     throw Object.assign(new Error('Points must be a positive integer'), { status: 400 });
@@ -29,6 +32,11 @@ async function earnPoints(memberId, businessId, staffId, points, description) {
   const client = await db.getClient();
   try {
     await client.query('BEGIN');
+
+    const before = await client.query('SELECT tier, push_token FROM members WHERE id=$1', [memberId]);
+    const oldTier    = before.rows[0].tier;
+    const pushToken  = before.rows[0].push_token;
+
     await client.query(
       `INSERT INTO transactions (member_id, business_id, staff_id, type, points, description)
        VALUES ($1,$2,$3,'earn',$4,$5)`,
@@ -49,7 +57,19 @@ async function earnPoints(memberId, businessId, staffId, points, description) {
       [points, memberId],
     );
     await client.query('COMMIT');
-    return { points, newBalance: updated.rows[0].points_balance, tier: updated.rows[0].tier };
+
+    const newTier = updated.rows[0].tier;
+    if (newTier !== oldTier && pushToken) {
+      const emoji = TIER_EMOJI[newTier] || '🎉';
+      sendPushNotification(
+        pushToken,
+        `${emoji} You've reached ${newTier}!`,
+        `Congratulations — keep earning at partner businesses to climb higher.`,
+        { type: 'tier_upgrade', tier: newTier },
+      );
+    }
+
+    return { points, newBalance: updated.rows[0].points_balance, tier: newTier };
   } catch (e) {
     await client.query('ROLLBACK');
     throw e;

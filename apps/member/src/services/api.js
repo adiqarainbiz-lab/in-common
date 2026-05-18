@@ -17,11 +17,12 @@ export const auth = {
 };
 
 export const member = {
-  profile:      ()                     => api.get('/member/profile'),
-  updateProfile: (name, phone_number)  => api.patch('/member/profile', { name, phone_number }),
-  qrToken:      ()         => api.get('/member/qr-token'),
-  transactions: (page = 1) => api.get(`/member/transactions?page=${page}`),
-  businesses:   (category) => api.get(`/member/businesses${category ? `?category=${category}` : ''}`),
+  profile:       ()                     => api.get('/member/profile'),
+  updateProfile: (name, phone_number)   => api.patch('/member/profile', { name, phone_number }),
+  savePushToken: (token)                => api.patch('/member/push-token', { token }),
+  qrToken:       ()                     => api.get('/member/qr-token'),
+  transactions:  (page = 1)            => api.get(`/member/transactions?page=${page}`),
+  businesses:    (category)            => api.get(`/member/businesses${category ? `?category=${category}` : ''}`),
 };
 
 export const pub = {

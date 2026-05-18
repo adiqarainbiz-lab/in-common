@@ -1,6 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth as authApi, member as memberApi } from '../services/api';
+import { registerForPushNotifications } from '../services/notifications';
+
+function syncPushToken() {
+  registerForPushNotifications().then((pushToken) => {
+    if (pushToken) memberApi.savePushToken(pushToken).catch(() => {});
+  }).catch(() => {});
+}
 
 const AuthContext = createContext(null);
 
@@ -18,6 +25,7 @@ export function AuthProvider({ children }) {
         try {
           const res = await memberApi.profile();
           setProfile(res.data);
+          syncPushToken();
         } catch {
           await AsyncStorage.removeItem('member_token');
           setToken(null);
@@ -38,6 +46,7 @@ export function AuthProvider({ children }) {
     await AsyncStorage.setItem('member_token', t);
     setToken(t);
     setProfile(m);
+    syncPushToken();
     return m;
   };
 

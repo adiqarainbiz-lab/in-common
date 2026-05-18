@@ -19,6 +19,16 @@ router.get('/profile', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// PATCH /api/member/push-token
+router.patch('/push-token', async (req, res, next) => {
+  try {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ error: 'token required' });
+    await db.query('UPDATE members SET push_token=$1 WHERE id=$2', [token, req.member.sub]);
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
 // PATCH /api/member/profile
 router.patch('/profile', async (req, res, next) => {
   try {
