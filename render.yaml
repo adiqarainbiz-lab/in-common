@@ -1,0 +1,51 @@
+services:
+  # ── Backend API ───────────────────────────────────────────────────────────────
+  - type: web
+    name: in-common-backend
+    env: node
+    region: frankfurt
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: QR_JWT_EXPIRES_IN
+        value: 90s
+      - key: OTP_DELIVERY
+        value: console
+      - key: DATABASE_URL
+        fromDatabase:
+          name: in-common-db
+          property: connectionString
+      - key: CORS_ORIGINS
+        value: https://in-common-admin.onrender.com
+
+  # ── Admin Dashboard ───────────────────────────────────────────────────────────
+  - type: web
+    name: in-common-admin
+    env: static
+    region: frankfurt
+    rootDir: apps/admin
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://in-common-backend.onrender.com/api
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+# ── Database ──────────────────────────────────────────────────────────────────
+databases:
+  - name: in-common-db
+    databaseName: incommon
+    user: incommon
+    region: frankfurt
+    plan: free
