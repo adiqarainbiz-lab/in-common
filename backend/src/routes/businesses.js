@@ -10,7 +10,7 @@ router.get('/', async (req, res, next) => {
     if (category) { params.push(category); where += ` AND category=$${params.length}`; }
 
     const result = await db.query(
-      `SELECT id, name, category, address, description, logo_url, points_rate
+      `SELECT id, name, category, address, description, logo_url, cover_url, points_rate
        FROM businesses ${where} ORDER BY name`,
       params,
     );

@@ -110,7 +110,7 @@ router.get('/businesses', async (req, res, next) => {
     }
 
     const result = await db.query(
-      `SELECT id, name, category, address, description, logo_url, points_rate
+      `SELECT id, name, category, address, description, logo_url, cover_url, points_rate
        FROM businesses ${where} ORDER BY name`,
       params,
     );
