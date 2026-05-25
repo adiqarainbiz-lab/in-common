@@ -48,6 +48,7 @@ export default function Layout({ title, actions, children }) {
             Requests
             {reqCount > 0 && <span style={badgeStyle}>{reqCount}</span>}
           </NavLink>
+          <NavLink to="/referrals">Referrals</NavLink>
         </nav>
         <div className="sidebar-footer">
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 8 }}>

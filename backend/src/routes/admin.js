@@ -724,4 +724,56 @@ router.patch('/applications/:id/reject', authAdmin, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// ─── Referral Analytics ───────────────────────────────────────────────────────
+
+router.get('/referrals', authAdmin, async (req, res, next) => {
+  try {
+    // Summary stats
+    const { rows: [summary] } = await db.query(`
+      SELECT
+        COUNT(*)                     AS total_referrals,
+        COALESCE(SUM(points) * 2, 0) AS total_points_awarded,
+        COUNT(DISTINCT referrer_id)  AS total_referrers
+      FROM referrals
+    `);
+
+    // Top referrers
+    const { rows: topReferrers } = await db.query(`
+      SELECT
+        m.id, m.name, m.phone_number,
+        COUNT(r.id)        AS referral_count,
+        SUM(r.points)      AS points_earned,
+        MAX(r.created_at)  AS last_referral_at
+      FROM referrals r
+      JOIN members m ON m.id = r.referrer_id
+      GROUP BY m.id, m.name, m.phone_number
+      ORDER BY referral_count DESC, last_referral_at DESC
+      LIMIT 20
+    `);
+
+    // Full referral list (most recent first)
+    const { rows: referrals } = await db.query(`
+      SELECT
+        r.id, r.points, r.created_at,
+        ref.name  AS referrer_name,  ref.phone_number  AS referrer_phone,
+        ref2.name AS referee_name,   ref2.phone_number AS referee_phone
+      FROM referrals r
+      JOIN members ref  ON ref.id  = r.referrer_id
+      JOIN members ref2 ON ref2.id = r.referee_id
+      ORDER BY r.created_at DESC
+      LIMIT 200
+    `);
+
+    res.json({
+      summary: {
+        total_referrals:    parseInt(summary.total_referrals),
+        total_points_awarded: parseInt(summary.total_points_awarded),
+        total_referrers:    parseInt(summary.total_referrers),
+      },
+      topReferrers,
+      referrals,
+    });
+  } catch (e) { next(e); }
+});
+
 module.exports = router;
