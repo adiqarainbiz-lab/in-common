@@ -156,7 +156,7 @@ async function reverseTransaction(txId, staffId, businessId) {
     await client.query(
       `INSERT INTO transactions (member_id, business_id, staff_id, type, points, description, reversal_of)
        VALUES ($1,$2,$3,'reversal',$4,$5,$6)`,
-      [tx.member_id, tx.business_id, staffId, pointsDelta, `Reversal of ${tx.type}`, txId],
+      [tx.member_id, tx.business_id, staffId, pointsDelta, `Reversal of ${tx.type} (${staffId ? 'staff' : 'admin'})`, txId],
     );
 
     const updated = await client.query(

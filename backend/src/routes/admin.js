@@ -325,7 +325,7 @@ router.get('/members/:id', authAdmin, async (req, res, next) => {
 
 router.post('/transactions/:id/reverse', authAdmin, async (req, res, next) => {
   try {
-    const result = await reverseTransaction(req.params.id, req.admin.sub, null);
+    const result = await reverseTransaction(req.params.id, null, null);
     res.json(result);
   } catch (e) { next(e); }
 });
