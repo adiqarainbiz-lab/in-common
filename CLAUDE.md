@@ -6,22 +6,35 @@
 > **Update this section at the end of every session.**
 
 **Last session:** 2026-05-25
-**Last commit:** `11aa117` — feat: add member onboarding flow for new signups
+**Last commit:** `7e41ef1` — feat: admin tools — points adjustment, member edit/deactivation, tx filtering, CSV export
 
 **Current status:**
 - Backend + admin dashboard deployed to Render: https://in-common-1.onrender.com
 - All 4 apps exist (backend, member app, staff app, admin dashboard)
 - Core feature set is complete — auth, QR scanning, points, tiers, transactions, reversals, push notifications, analytics, admin CRUD
-- ✅ Onboarding flow added for new members (4-slide carousel, shows once per device)
+- ✅ Member onboarding flow (4-slide carousel, shows once per device, routes to QR tab after)
+- ✅ New-member cold start UX (nudge cards on Home/History/QR screens, empty states)
+- ✅ Render deploy race condition fixed (server starts first, migrations async)
+- ✅ All 4 admin tools: manual points adjustment, member edit+deactivation, tx filtering, CSV export
 
-**Next up / in progress:**
-- Onboarding polish is the current focus
-- Possible next steps: admin manual points adjustment, app store prep (EAS Build), business self-signup
+**Admin tools summary:**
+- `PATCH /admin/members/:id` — edit name/phone
+- `PATCH /admin/members/:id/status` — toggle is_active (deactivate/reactivate)
+- `POST /admin/members/:id/adjust` — manual ⚡ points adjust with description + tier recalc (DB transaction)
+- `GET /admin/members/:id/transactions` — filtered by date range + type
+- `GET /admin/export/members` — download all members as CSV
+- `GET /admin/export/transactions` — download transactions as CSV (date/type/member filters, max 50k rows)
+- Migration 009 adds `adjust` tx type + `is_active` column (runs automatically on next deploy)
+
+**Next up:**
+- App store prep (EAS Build for member app)
+- Business self-signup flow (businesses apply, admin approves)
+- Push notification campaigns from admin
 
 **Known issues / notes:**
 - Render free tier spins down — first request after inactivity is slow
 - Android Studio project at `C:\Users\adiqa\AndroidStudioProjects\InCommon` is an old abandoned prototype — ignore it
-- `is_new` flag now returned from `/auth/member/verify-otp` — used to trigger onboarding
+- `is_new` flag returned from `/auth/member/verify-otp` — used to trigger onboarding
 
 ---
 
