@@ -28,6 +28,10 @@ export function AuthProvider({ children }) {
           const res = await memberApi.profile();
           setProfile(res.data);
           syncPushToken();
+          // Show onboarding if this device hasn't completed it yet —
+          // covers the case where the app was killed mid-onboarding
+          const seen = await AsyncStorage.getItem('onboarding_seen');
+          if (!seen) setShowOnboarding(true);
         } catch {
           await AsyncStorage.removeItem('member_token');
           setToken(null);
