@@ -8,6 +8,64 @@ function authManager(req, res, next) {
   next();
 }
 
+// GET /api/business-portal/stats
+router.get('/stats', authStaff, async (req, res, next) => {
+  try {
+    const bizId = req.staff.business_id;
+
+    const { rows: [totals] } = await db.query(
+      `SELECT
+         COUNT(*)                                                         AS scans_total,
+         COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '7 days') AS scans_week,
+         COUNT(*) FILTER (WHERE created_at >= CURRENT_DATE)              AS scans_today,
+         COALESCE(SUM(points), 0)                                                          AS points_total,
+         COALESCE(SUM(points) FILTER (WHERE created_at >= NOW() - INTERVAL '7 days'), 0)  AS points_week,
+         COALESCE(SUM(points) FILTER (WHERE created_at >= CURRENT_DATE), 0)               AS points_today,
+         COUNT(DISTINCT member_id)                                                         AS members_total,
+         COUNT(DISTINCT member_id) FILTER (WHERE created_at >= NOW() - INTERVAL '7 days') AS members_week
+       FROM transactions
+       WHERE business_id = $1 AND type = 'earn'`,
+      [bizId],
+    );
+
+    // Daily breakdown — last 7 days (fills in zeros for missing days)
+    const { rows: dailyRaw } = await db.query(
+      `SELECT
+         DATE(created_at AT TIME ZONE 'Asia/Jerusalem') AS date,
+         COUNT(*)                                       AS scans,
+         COALESCE(SUM(points), 0)                       AS points
+       FROM transactions
+       WHERE business_id = $1 AND type = 'earn'
+         AND created_at >= NOW() - INTERVAL '7 days'
+       GROUP BY DATE(created_at AT TIME ZONE 'Asia/Jerusalem')
+       ORDER BY date ASC`,
+      [bizId],
+    );
+
+    // Build full 7-day array, filling zeros for days with no scans
+    const daily = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().slice(0, 10);
+      const found = dailyRaw.find(r => r.date?.toISOString?.().slice(0, 10) === dateStr || r.date === dateStr);
+      daily.push({ date: dateStr, scans: parseInt(found?.scans || 0), points: parseInt(found?.points || 0) });
+    }
+
+    res.json({
+      scans_total:   parseInt(totals.scans_total),
+      scans_week:    parseInt(totals.scans_week),
+      scans_today:   parseInt(totals.scans_today),
+      points_total:  parseInt(totals.points_total),
+      points_week:   parseInt(totals.points_week),
+      points_today:  parseInt(totals.points_today),
+      members_total: parseInt(totals.members_total),
+      members_week:  parseInt(totals.members_week),
+      daily,
+    });
+  } catch (e) { next(e); }
+});
+
 // GET /api/business-portal/me
 router.get('/me', authStaff, async (req, res, next) => {
   try {

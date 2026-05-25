@@ -31,6 +31,7 @@ export const staffAuth = {
 
 export const staffApi = {
   businessPortal: ()       => api.get('/business-portal/me'),
+  businessStats:  ()       => api.get('/business-portal/stats'),
   profileRequest: (fields) => api.post('/business-portal/profile-request', fields),
   offerRequest:   (fields) => api.post('/business-portal/offer-request', fields),
 

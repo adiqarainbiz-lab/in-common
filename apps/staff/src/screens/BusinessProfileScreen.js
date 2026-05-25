@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Image, ActivityIndicator, Alert,
+  TextInput, Image, ActivityIndicator, Alert, Dimensions,
 } from 'react-native';
+
+const SCREEN_W = Dimensions.get('window').width;
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { staffApi } from '../services/api';
 
@@ -59,9 +61,33 @@ function OfferForm({ initial, onSubmit, onCancel, loading }) {
   );
 }
 
+// ── Mini bar chart ────────────────────────────────────────────────────────────
+function BarChart({ daily }) {
+  const maxScans = Math.max(...daily.map(d => d.scans), 1);
+  const BAR_MAX_H = 56;
+  const days = ['S','M','T','W','T','F','S'];
+  return (
+    <View style={styles.chartWrap}>
+      {daily.map((d, i) => {
+        const barH = Math.max(4, Math.round((d.scans / maxScans) * BAR_MAX_H));
+        const label = new Date(d.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 1);
+        const isToday = d.date === new Date().toISOString().slice(0, 10);
+        return (
+          <View key={d.date} style={styles.barCol}>
+            <Text style={styles.barCount}>{d.scans > 0 ? d.scans : ''}</Text>
+            <View style={[styles.bar, { height: barH, backgroundColor: isToday ? '#1B4332' : '#B7E4C7' }]} />
+            <Text style={[styles.barLabel, isToday && { color: '#1B4332', fontWeight: '700' }]}>{label}</Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function BusinessProfileScreen() {
   const [data,          setData]         = useState(null);
+  const [stats,         setStats]        = useState(null);
   const [loading,       setLoading]      = useState(true);
 
   // Profile edit state
@@ -75,17 +101,26 @@ export default function BusinessProfileScreen() {
 
   const load = useCallback(async () => {
     try {
-      const res = await staffApi.businessPortal();
-      setData(res.data);
-      setProfileFields({
-        logo_url:    res.data.business.logo_url    || '',
-        cover_url:   res.data.business.cover_url   || '',
-        description: res.data.business.description || '',
-        hours:       res.data.business.hours       || '',
-        phone:       res.data.business.phone       || '',
-        website:     res.data.business.website     || '',
-        instagram:   res.data.business.instagram   || '',
-      });
+      const [portalRes, statsRes] = await Promise.allSettled([
+        staffApi.businessPortal(),
+        staffApi.businessStats(),
+      ]);
+      if (portalRes.status === 'fulfilled') {
+        const res = portalRes.value;
+        setData(res.data);
+        setProfileFields({
+          logo_url:    res.data.business.logo_url    || '',
+          cover_url:   res.data.business.cover_url   || '',
+          description: res.data.business.description || '',
+          hours:       res.data.business.hours       || '',
+          phone:       res.data.business.phone       || '',
+          website:     res.data.business.website     || '',
+          instagram:   res.data.business.instagram   || '',
+        });
+      }
+      if (statsRes.status === 'fulfilled') {
+        setStats(statsRes.value.data);
+      }
     } finally {
       setLoading(false);
     }
@@ -183,6 +218,50 @@ export default function BusinessProfileScreen() {
             </View>
           )}
         </View>
+
+        {/* ── Stats dashboard ───────────────────────────────────────── */}
+        {stats && (
+          <View style={styles.statsDash}>
+            {/* Top 3 stat cards */}
+            <View style={styles.statsRow}>
+              <View style={styles.statCard}>
+                <Text style={styles.statValue}>{stats.scans_today}</Text>
+                <Text style={styles.statLabel}>Scans today</Text>
+              </View>
+              <View style={[styles.statCard, styles.statCardMid]}>
+                <Text style={styles.statValue}>{stats.scans_week}</Text>
+                <Text style={styles.statLabel}>Scans this week</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Text style={styles.statValue}>{stats.members_week}</Text>
+                <Text style={styles.statLabel}>Members this week</Text>
+              </View>
+            </View>
+
+            {/* Points row */}
+            <View style={styles.statsRow}>
+              <View style={[styles.statCard, { flex: 1 }]}>
+                <Text style={styles.statValue}>{stats.points_week.toLocaleString()}</Text>
+                <Text style={styles.statLabel}>Points awarded this week</Text>
+              </View>
+              <View style={[styles.statCard, { flex: 1, marginLeft: 8 }]}>
+                <Text style={styles.statValue}>{stats.points_total.toLocaleString()}</Text>
+                <Text style={styles.statLabel}>Points awarded all-time</Text>
+              </View>
+            </View>
+
+            {/* 7-day bar chart */}
+            <View style={styles.chartCard}>
+              <Text style={styles.chartTitle}>Scans — last 7 days</Text>
+              <BarChart daily={stats.daily} />
+            </View>
+
+            {/* All-time members */}
+            <View style={styles.membersTotalRow}>
+              <Text style={styles.membersTotalText}>👥 {stats.members_total.toLocaleString()} total unique members all-time</Text>
+            </View>
+          </View>
+        )}
 
         {/* Cover preview */}
         {biz.cover_url ? (
@@ -296,6 +375,25 @@ const styles = StyleSheet.create({
   headerSub:    { fontSize: 14, color: '#555', marginTop: 2, textTransform: 'capitalize' },
   pendingBadge: { marginTop: 10, backgroundColor: '#FEF3C7', borderRadius: 10, padding: 10 },
   pendingBadgeText: { color: '#92400E', fontSize: 13, fontWeight: '600' },
+
+  // Stats dashboard
+  statsDash:         { paddingHorizontal: 12, paddingTop: 4, gap: 8 },
+  statsRow:          { flexDirection: 'row', gap: 8 },
+  statCard:          { flex: 1, backgroundColor: '#fff', borderRadius: 14, padding: 14, elevation: 2, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6 },
+  statCardMid:       { borderLeftWidth: 1, borderRightWidth: 1, borderColor: '#F0F0F0' },
+  statValue:         { fontSize: 26, fontWeight: '900', color: '#1B4332', lineHeight: 30 },
+  statLabel:         { fontSize: 11, color: '#888', marginTop: 3, fontWeight: '500' },
+
+  chartCard:         { backgroundColor: '#fff', borderRadius: 14, padding: 16, elevation: 2, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6 },
+  chartTitle:        { fontSize: 13, fontWeight: '700', color: '#555', marginBottom: 12 },
+  chartWrap:         { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: 80 },
+  barCol:            { flex: 1, alignItems: 'center', gap: 4 },
+  bar:               { width: '60%', borderRadius: 4 },
+  barCount:          { fontSize: 10, color: '#555', fontWeight: '700', height: 14 },
+  barLabel:          { fontSize: 11, color: '#aaa', fontWeight: '500' },
+
+  membersTotalRow:   { backgroundColor: '#F0FAF5', borderRadius: 12, padding: 12 },
+  membersTotalText:  { fontSize: 13, color: '#2D6A4F', fontWeight: '600', textAlign: 'center' },
 
   coverPreview: { width: '100%', height: 180, backgroundColor: '#D8F3DC', alignItems: 'center', justifyContent: 'center' },
   coverFallback:{ alignItems: 'center', justifyContent: 'center' },
