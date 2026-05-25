@@ -17,8 +17,17 @@ const Stack = createNativeStackNavigator();
 const Tab   = createBottomTabNavigator();
 
 function Tabs() {
+  const { postOnboardingTab, clearPostOnboardingTab } = useAuth();
+  const initialTab = postOnboardingTab || 'Home';
+
+  // Clear the flag after the navigator mounts so back-navigation works normally
+  React.useEffect(() => {
+    if (postOnboardingTab) clearPostOnboardingTab();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <Tab.Navigator
+      initialRouteName={initialTab}
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: '#2D6A4F',

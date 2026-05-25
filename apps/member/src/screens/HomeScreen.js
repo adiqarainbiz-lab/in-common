@@ -64,6 +64,18 @@ export default function HomeScreen({ navigation }) {
           )}
         </View>
 
+        {/* First-visit nudge for new members */}
+        {profile.points_balance === 0 && (
+          <TouchableOpacity style={styles.firstVisitCard} onPress={() => navigation.navigate('QR')} activeOpacity={0.85}>
+            <Text style={styles.firstVisitEmoji}>👋</Text>
+            <View style={styles.firstVisitText}>
+              <Text style={styles.firstVisitTitle}>Ready to earn your first points?</Text>
+              <Text style={styles.firstVisitSub}>Show your QR code at any partner business to get started.</Text>
+            </View>
+            <Text style={styles.firstVisitArrow}>›</Text>
+          </TouchableOpacity>
+        )}
+
         {/* Quick actions */}
         <View style={styles.actions}>
           <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('QR')}>
@@ -131,6 +143,12 @@ const styles = StyleSheet.create({
   actionBtn:       { flex: 1, backgroundColor: 'white', borderRadius: 16, padding: 16, alignItems: 'center', gap: 8, elevation: 2, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8 },
   actionIcon:      { fontSize: 28 },
   actionLabel:     { fontSize: 12, color: '#333', fontWeight: '600', textAlign: 'center' },
+  firstVisitCard:  { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginBottom: 8, backgroundColor: '#E8F5E9', borderRadius: 16, padding: 16, gap: 12, borderWidth: 1, borderColor: '#C8E6C9' },
+  firstVisitEmoji: { fontSize: 28 },
+  firstVisitText:  { flex: 1 },
+  firstVisitTitle: { fontSize: 14, fontWeight: '700', color: '#1B4332', marginBottom: 2 },
+  firstVisitSub:   { fontSize: 12, color: '#2D6A4F', lineHeight: 17 },
+  firstVisitArrow: { fontSize: 24, color: '#2D6A4F', fontWeight: '300' },
   section:         { margin: 16, backgroundColor: 'white', borderRadius: 20, padding: 20, elevation: 2, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8 },
   sectionTitle:    { fontSize: 16, fontWeight: '700', color: '#1B4332', marginBottom: 16 },
   tierRow:         { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F0F0F0', gap: 12 },

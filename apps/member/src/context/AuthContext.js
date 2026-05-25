@@ -16,7 +16,8 @@ export function AuthProvider({ children }) {
   const [profile,         setProfile]         = useState(null);
   const [loading,         setLoading]         = useState(true);
   const [isGuest,         setIsGuest]         = useState(false);
-  const [showOnboarding,  setShowOnboarding]  = useState(false);
+  const [showOnboarding,    setShowOnboarding]    = useState(false);
+  const [postOnboardingTab, setPostOnboardingTab] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -58,8 +59,11 @@ export function AuthProvider({ children }) {
 
   const markOnboardingSeen = async () => {
     await AsyncStorage.setItem('onboarding_seen', '1');
+    setPostOnboardingTab('QR'); // land on QR screen after onboarding
     setShowOnboarding(false);
   };
+
+  const clearPostOnboardingTab = () => setPostOnboardingTab(null);
 
   const logout = async () => {
     await AsyncStorage.removeItem('member_token');
@@ -83,7 +87,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ token, profile, loading, isGuest, showOnboarding, requestOTP, login, logout, refreshProfile, updateProfile, continueAsGuest, exitGuest, markOnboardingSeen }}>
+    <AuthContext.Provider value={{ token, profile, loading, isGuest, showOnboarding, postOnboardingTab, requestOTP, login, logout, refreshProfile, updateProfile, continueAsGuest, exitGuest, markOnboardingSeen, clearPostOnboardingTab }}>
       {children}
     </AuthContext.Provider>
   );

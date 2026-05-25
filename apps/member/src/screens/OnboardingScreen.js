@@ -142,7 +142,7 @@ export default function OnboardingScreen() {
 
         {/* CTA button */}
         <TouchableOpacity style={[styles.btn, isLast && styles.btnLast]} onPress={goNext}>
-          <Text style={styles.btnText}>
+          <Text style={[styles.btnText, isLast && styles.btnTextLast]}>
             {isLast ? '🌿  Get Started' : 'Next →'}
           </Text>
         </TouchableOpacity>
@@ -189,7 +189,8 @@ const styles = StyleSheet.create({
   dotActive:     { width: 24, backgroundColor: '#FFFFFF' },
   dotInactive:   { width: 8, backgroundColor: '#FFFFFF44' },
 
-  btn:           { backgroundColor: '#FFFFFF22', borderRadius: 14, paddingVertical: 16, paddingHorizontal: 48, borderWidth: 1, borderColor: '#FFFFFF44' },
+  btn:           { backgroundColor: '#FFFFFF22', borderRadius: 14, paddingVertical: 16, paddingHorizontal: 48, borderWidth: 1, borderColor: '#FFFFFF55' },
   btnLast:       { backgroundColor: '#FFFFFF', borderColor: '#FFFFFF' },
-  btnText:       { fontSize: 16, fontWeight: '700', color: '#1B4332' },
+  btnText:       { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
+  btnTextLast:   { color: '#1B4332' },
 });
