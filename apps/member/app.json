@@ -31,7 +31,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": ""
+        "projectId": "f1cd4605-737c-4bbe-bf63-006e8de57e13"
       }
     },
     "plugins": [
@@ -43,6 +43,7 @@
           "sounds": []
         }
       ]
-    ]
+    ],
+    "owner": "incommondev"
   }
 }
