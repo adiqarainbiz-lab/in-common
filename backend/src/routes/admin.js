@@ -4,6 +4,7 @@ const jwt    = require('jsonwebtoken');
 const db     = require('../config/database');
 const { authAdmin } = require('../middleware/auth');
 const { reverseTransaction } = require('../services/pointsService');
+const { sendBulkPushNotifications } = require('../services/notificationService');
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
@@ -721,6 +722,35 @@ router.patch('/applications/:id/reject', authAdmin, async (req, res, next) => {
       [notes || null, app.id],
     );
     res.json({ message: 'Application rejected.' });
+  } catch (e) { next(e); }
+});
+
+// ─── Push Notification Campaigns ─────────────────────────────────────────────
+
+router.post('/notifications/send', authAdmin, async (req, res, next) => {
+  try {
+    const { title, body, tier } = req.body;
+    if (!title?.trim()) return res.status(400).json({ error: 'title is required' });
+    if (!body?.trim())  return res.status(400).json({ error: 'body is required' });
+
+    const VALID_TIERS = ['Seedling', 'Olive', 'Cedar', 'Keffiyeh'];
+    let query = `SELECT push_token FROM members WHERE is_active = TRUE AND push_token IS NOT NULL`;
+    const params = [];
+    if (tier && VALID_TIERS.includes(tier)) {
+      params.push(tier);
+      query += ` AND tier = $1`;
+    }
+
+    const { rows } = await db.query(query, params);
+    const tokens = rows.map(r => r.push_token);
+
+    if (!tokens.length) {
+      return res.json({ sent: 0, failed: 0, no_token: 0, message: 'No eligible members with push tokens.' });
+    }
+
+    const result = await sendBulkPushNotifications(tokens, title.trim(), body.trim(), { type: 'campaign' });
+    console.log(`[admin] Push campaign sent by ${req.admin?.email}: "${title}" → ${JSON.stringify(result)}`);
+    res.json({ ...result, total_eligible: tokens.length });
   } catch (e) { next(e); }
 });
 
