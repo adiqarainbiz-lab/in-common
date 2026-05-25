@@ -7,25 +7,40 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "backgroundColor": "#2D6A4F"
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1B4332"
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "ps.incommon.member"
+      "bundleIdentifier": "ps.incommon.member",
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#2D6A4F"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1B4332"
       },
       "package": "ps.incommon.member",
-      "googleServicesFile": "./google-services.json"
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.POST_NOTIFICATIONS"
+      ]
+    },
+    "extra": {
+      "eas": {
+        "projectId": ""
+      }
     },
     "plugins": [
       [
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
-          "color": "#2D6A4F"
+          "color": "#1B4332",
+          "sounds": []
         }
       ]
     ]
