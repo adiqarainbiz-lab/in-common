@@ -20,7 +20,10 @@ export default function QRScreen() {
 
         <View style={styles.infoRow}>
           <TierBadge tier={profile.tier} size="md" />
-          <Text style={styles.balance}>{profile.points_balance.toLocaleString()} pts</Text>
+          {profile.points_balance > 0
+            ? <Text style={styles.balance}>{profile.points_balance.toLocaleString()} pts</Text>
+            : <Text style={styles.balanceNew}>Earn your first points below 👇</Text>
+          }
         </View>
 
         {profile.member_code && (
@@ -61,7 +64,8 @@ const styles = StyleSheet.create({
   title:     { fontSize: 26, fontWeight: '800', color: '#1B4332', textAlign: 'center' },
   subtitle:  { fontSize: 14, color: '#666', textAlign: 'center' },
   infoRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 8 },
-  balance:   { fontSize: 18, fontWeight: '700', color: '#1B4332' },
+  balance:    { fontSize: 18, fontWeight: '700', color: '#1B4332' },
+  balanceNew: { fontSize: 13, fontWeight: '600', color: '#2D6A4F', fontStyle: 'italic' },
   infoCard:  { backgroundColor: 'white', borderRadius: 20, padding: 20, gap: 14, elevation: 2, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8 },
   infoTitle: { fontSize: 16, fontWeight: '700', color: '#1B4332', marginBottom: 4 },
   infoItem:  { flexDirection: 'row', alignItems: 'center', gap: 12 },

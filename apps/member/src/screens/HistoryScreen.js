@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { member as memberApi } from '../services/api';
 
@@ -29,7 +29,22 @@ function TransactionRow({ item }) {
   );
 }
 
-export default function HistoryScreen() {
+function EmptyHistory({ navigation }) {
+  return (
+    <View style={styles.emptyContainer}>
+      <Text style={styles.emptyEmoji}>🌱</Text>
+      <Text style={styles.emptyTitle}>No transactions yet</Text>
+      <Text style={styles.emptySubtitle}>
+        Your points history will appear here after your first visit to a partner business.
+      </Text>
+      <TouchableOpacity style={styles.emptyBtn} onPress={() => navigation.navigate('Businesses')}>
+        <Text style={styles.emptyBtnText}>Find a partner business →</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+export default function HistoryScreen({ navigation }) {
   const [transactions, setTransactions] = useState([]);
   const [loading,      setLoading]      = useState(true);
   const [refreshing,   setRefreshing]   = useState(false);
@@ -70,7 +85,7 @@ export default function HistoryScreen() {
         onEndReached={loadMore}
         onEndReachedThreshold={0.3}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(1, true)} />}
-        ListEmptyComponent={<Text style={styles.empty}>No transactions yet. Start earning points!</Text>}
+        ListEmptyComponent={<EmptyHistory navigation={navigation} />}
       />
     </SafeAreaView>
   );
@@ -89,5 +104,10 @@ const styles = StyleSheet.create({
   rowDesc:   { fontSize: 13, color: '#666' },
   rowDate:   { fontSize: 11, color: '#AAA' },
   rowPoints: { fontSize: 16, fontWeight: '800' },
-  empty:     { textAlign: 'center', color: '#AAA', marginTop: 60, fontSize: 15, paddingHorizontal: 32 },
+  emptyContainer: { alignItems: 'center', paddingHorizontal: 40, paddingTop: 64, gap: 12 },
+  emptyEmoji:     { fontSize: 56, marginBottom: 8 },
+  emptyTitle:     { fontSize: 20, fontWeight: '800', color: '#1B4332', textAlign: 'center' },
+  emptySubtitle:  { fontSize: 14, color: '#888', textAlign: 'center', lineHeight: 21 },
+  emptyBtn:       { marginTop: 12, backgroundColor: '#2D6A4F', borderRadius: 12, paddingVertical: 14, paddingHorizontal: 28 },
+  emptyBtnText:   { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
 });

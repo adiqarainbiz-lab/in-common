@@ -49,7 +49,13 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.pointsCard}>
           <Text style={styles.pointsLabel}>Common Points</Text>
           <Text style={styles.pointsValue}>{profile.points_balance.toLocaleString()}</Text>
-          <Text style={styles.pointsSubtext}>Common Points — redeem in-store</Text>
+          {profile.points_balance === 0 ? (
+            <TouchableOpacity onPress={() => navigation.navigate('Businesses')}>
+              <Text style={styles.pointsSubtextCta}>Visit a partner business to start earning →</Text>
+            </TouchableOpacity>
+          ) : (
+            <Text style={styles.pointsSubtext}>pts — redeem as in-store credit</Text>
+          )}
 
           {next && (
             <View style={styles.progressSection}>
@@ -132,7 +138,8 @@ const styles = StyleSheet.create({
   pointsCard:      { margin: 16, backgroundColor: 'white', borderRadius: 20, padding: 24, elevation: 3, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 12 },
   pointsLabel:     { color: '#666', fontSize: 14, marginBottom: 4 },
   pointsValue:     { fontSize: 48, fontWeight: '800', color: '#1B4332', lineHeight: 56 },
-  pointsSubtext:   { color: '#2D6A4F', fontSize: 14, marginBottom: 20 },
+  pointsSubtext:    { color: '#2D6A4F', fontSize: 14, marginBottom: 20 },
+  pointsSubtextCta: { color: '#2D6A4F', fontSize: 14, marginBottom: 20, textDecorationLine: 'underline', fontWeight: '600' },
   progressSection: { gap: 8 },
   progressHeader:  { flexDirection: 'row', justifyContent: 'space-between' },
   progressLabel:   { fontSize: 13, color: '#555' },
