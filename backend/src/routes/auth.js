@@ -33,7 +33,7 @@ router.post('/member/request-otp', async (req, res, next) => {
 // ─── Member: verify OTP + register/login ─────────────────────────────────────
 router.post('/member/verify-otp', async (req, res, next) => {
   try {
-    const { phone_number, otp, name } = req.body;
+    const { phone_number, otp, name, referral_code } = req.body;
     if (!phone_number || !otp) return res.status(400).json({ error: 'phone_number and otp required' });
 
     const otpRes = await db.query(
@@ -58,6 +58,53 @@ router.post('/member/verify-otp', async (req, res, next) => {
       );
       member = result.rows[0];
       is_new = true;
+
+      // Process referral if a valid referral_code was provided
+      if (referral_code) {
+        const refRes = await db.query(
+          'SELECT id FROM members WHERE member_code=$1 AND id!=$2',
+          [referral_code.trim(), member.id],
+        );
+        const referrer = refRes.rows[0];
+        if (referrer) {
+          const client = await db.getClient();
+          try {
+            await client.query('BEGIN');
+            // Record the referral
+            await client.query(
+              `INSERT INTO referrals (referrer_id, referee_id, points) VALUES ($1,$2,150)
+               ON CONFLICT (referee_id) DO NOTHING`,
+              [referrer.id, member.id],
+            );
+            // Award 150 pts to referrer
+            await client.query(
+              `INSERT INTO transactions (member_id, type, points, description) VALUES ($1,'earn',150,'Referral bonus — friend joined')`,
+              [referrer.id],
+            );
+            await client.query(
+              `UPDATE members SET points_balance=points_balance+150 WHERE id=$1`,
+              [referrer.id],
+            );
+            // Award 150 pts to new member
+            await client.query(
+              `INSERT INTO transactions (member_id, type, points, description) VALUES ($1,'earn',150,'Welcome bonus — joined via referral')`,
+              [member.id],
+            );
+            await client.query(
+              `UPDATE members SET points_balance=points_balance+150 WHERE id=$1`,
+              [member.id],
+            );
+            await client.query('COMMIT');
+            // Refresh member row to reflect updated points
+            member = (await db.query('SELECT * FROM members WHERE id=$1', [member.id])).rows[0];
+          } catch (refErr) {
+            await client.query('ROLLBACK');
+            console.error('[referral] failed, skipping:', refErr.message);
+          } finally {
+            client.release();
+          }
+        }
+      }
     }
 
     // Consume OTP only after we know auth will succeed

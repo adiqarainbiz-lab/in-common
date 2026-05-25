@@ -15,6 +15,7 @@ export default function AuthScreen() {
   const [phone,   setPhone]   = useState('');
   const [otp,     setOtp]     = useState('');
   const [name,    setName]    = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [loading,  setLoading]  = useState(false);
   const [devOtp,   setDevOtp]   = useState('');
   const [error,    setError]    = useState('');
@@ -34,7 +35,7 @@ export default function AuthScreen() {
   function switchMode(next) {
     setMode(next);
     setStep(STEPS.PHONE);
-    setPhone(''); setOtp(''); setName('');
+    setPhone(''); setOtp(''); setName(''); setReferralCode('');
     setError(''); setDevOtp('');
   }
 
@@ -58,7 +59,11 @@ export default function AuthScreen() {
     setLoading(true);
     try {
       // For sign-up, pass name now. For sign-in, pass undefined and handle name-required below.
-      await login(phone.trim(), otp.trim(), mode === 'signup' ? name.trim() : undefined);
+      await login(
+        phone.trim(), otp.trim(),
+        mode === 'signup' ? name.trim() : undefined,
+        referralCode.trim() || undefined,
+      );
     } catch (e) {
       const errMsg = e.response?.data?.error || '';
       if (errMsg.includes('name required')) {
@@ -74,7 +79,7 @@ export default function AuthScreen() {
     setError('');
     setLoading(true);
     try {
-      await login(phone.trim(), otp.trim(), name.trim());
+      await login(phone.trim(), otp.trim(), name.trim(), referralCode.trim() || undefined);
     } catch (e) {
       setError(e.response?.data?.error || 'Registration failed');
     } finally { setLoading(false); }
@@ -131,8 +136,23 @@ export default function AuthScreen() {
                 keyboardType="phone-pad"
                 autoFocus={mode === 'signin'}
                 onSubmitEditing={handlePhone}
-                returnKeyType="go"
+                returnKeyType={mode === 'signup' ? 'next' : 'go'}
               />
+              {mode === 'signup' && (
+                <>
+                  <Text style={styles.label}>Referral code <Text style={styles.labelHint}>(optional)</Text></Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Friend's 6-digit code"
+                    value={referralCode}
+                    onChangeText={v => { setReferralCode(v); setError(''); }}
+                    keyboardType="number-pad"
+                    maxLength={6}
+                    returnKeyType="go"
+                    onSubmitEditing={handlePhone}
+                  />
+                </>
+              )}
               {error ? <Text style={styles.error}>{error}</Text> : null}
               {loading ? (
                 <>
@@ -224,6 +244,7 @@ const styles = StyleSheet.create({
   modeTabText:      { fontSize: 14, fontWeight: '600', color: '#888' },
   modeTabTextActive:{ color: '#1B4332' },
   label:            { fontSize: 15, color: '#1B4332', fontWeight: '600' },
+  labelHint:        { fontSize: 13, color: '#999', fontWeight: '400' },
   input:            { borderWidth: 1, borderColor: '#D0E8D8', borderRadius: 12, padding: 14, fontSize: 16 },
   otpInput:         { textAlign: 'center', letterSpacing: 8, fontSize: 24, fontWeight: '700' },
   btn:              { backgroundColor: '#2D6A4F', borderRadius: 12, paddingVertical: 16, alignItems: 'center' },

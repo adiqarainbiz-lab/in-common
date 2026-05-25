@@ -12,8 +12,8 @@ api.interceptors.request.use(async (config) => {
 });
 
 export const auth = {
-  requestOTP: (phone_number) => api.post('/auth/member/request-otp', { phone_number }),
-  verifyOTP:  (phone_number, otp, name) => api.post('/auth/member/verify-otp', { phone_number, otp, name }),
+  requestOTP: (phone_number)                      => api.post('/auth/member/request-otp', { phone_number }),
+  verifyOTP:  (phone_number, otp, name, referral_code) => api.post('/auth/member/verify-otp', { phone_number, otp, name, referral_code }),
 };
 
 export const member = {
@@ -23,6 +23,7 @@ export const member = {
   qrToken:       ()                     => api.get('/member/qr-token'),
   transactions:  (page = 1)            => api.get(`/member/transactions?page=${page}`),
   businesses:    (category)            => api.get(`/member/businesses${category ? `?category=${category}` : ''}`),
+  referral:      ()                     => api.get('/member/referral'),
 };
 
 export const pub = {

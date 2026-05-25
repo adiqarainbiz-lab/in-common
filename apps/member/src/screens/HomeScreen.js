@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, FlatList, Dimensions,
+  Image, FlatList, Dimensions, Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
 import TierBadge from '../components/TierBadge';
-import { pub } from '../services/api';
+import { pub, member as memberApi } from '../services/api';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const CARD_W = SCREEN_W * 0.52;
@@ -54,11 +54,23 @@ function OfferCard({ biz, onPress }) {
 
 export default function HomeScreen({ navigation }) {
   const { profile } = useAuth();
-  const [businesses, setBusinesses] = useState([]);
+  const [businesses,    setBusinesses]    = useState([]);
+  const [referralStats, setReferralStats] = useState(null);
 
   useEffect(() => {
     pub.businesses().then(r => setBusinesses(r.data)).catch(() => {});
+    memberApi.referral().then(r => setReferralStats(r.data)).catch(() => {});
   }, []);
+
+  async function handleShare() {
+    if (!referralStats?.referral_code) return;
+    try {
+      await Share.share({
+        message: `Join me on In Common — the loyalty app for Jerusalem's best spots!\n\nUse my code ${referralStats.referral_code} when you sign up and we both get 150 bonus points 🎁\n\nhttps://in-common.carrd.co`,
+        title: 'Join In Common',
+      });
+    } catch { /* dismissed */ }
+  }
 
   if (!profile) return null;
 
@@ -131,6 +143,33 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.actionLabel}>History</Text>
           </TouchableOpacity>
         </View>
+
+        {/* ── Invite Friends ───────────────────────────────────────── */}
+        {referralStats && (
+          <View style={styles.inviteCard}>
+            <LinearGradient colors={['#1B4332', '#2D6A4F']} style={styles.inviteGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+              <View style={styles.inviteLeft}>
+                <Text style={styles.inviteTitle}>Invite Friends</Text>
+                <Text style={styles.inviteSub}>You & your friend each get</Text>
+                <Text style={styles.inviteBonus}>+150 pts 🎁</Text>
+                {referralStats.friends_count > 0 && (
+                  <Text style={styles.inviteCount}>
+                    {referralStats.friends_count} friend{referralStats.friends_count !== 1 ? 's' : ''} joined so far
+                  </Text>
+                )}
+              </View>
+              <View style={styles.inviteRight}>
+                <View style={styles.codeBox}>
+                  <Text style={styles.codeLabel}>Your code</Text>
+                  <Text style={styles.codeValue}>{referralStats.referral_code}</Text>
+                </View>
+                <TouchableOpacity style={styles.shareBtn} onPress={handleShare} activeOpacity={0.8}>
+                  <Text style={styles.shareBtnText}>Share 🔗</Text>
+                </TouchableOpacity>
+              </View>
+            </LinearGradient>
+          </View>
+        )}
 
         {/* ── Around Jerusalem ─────────────────────────────────────── */}
         {businesses.length > 0 && (
@@ -224,6 +263,21 @@ const styles = StyleSheet.create({
   actionBtn:         { flex: 1, backgroundColor: 'white', borderRadius: 16, padding: 16, alignItems: 'center', gap: 8, elevation: 2, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8 },
   actionIcon:        { fontSize: 26 },
   actionLabel:       { fontSize: 12, color: '#333', fontWeight: '600' },
+
+  // Invite Friends
+  inviteCard:        { marginHorizontal: 16, marginTop: 16, borderRadius: 20, overflow: 'hidden', elevation: 3, shadowColor: '#000', shadowOpacity: 0.10, shadowRadius: 12 },
+  inviteGradient:    { flexDirection: 'row', padding: 20, gap: 16 },
+  inviteLeft:        { flex: 1, gap: 4 },
+  inviteTitle:       { color: 'white', fontSize: 17, fontWeight: '800' },
+  inviteSub:         { color: 'rgba(255,255,255,0.72)', fontSize: 12 },
+  inviteBonus:       { color: '#B7E4C7', fontSize: 20, fontWeight: '800', marginTop: 2 },
+  inviteCount:       { color: 'rgba(255,255,255,0.6)', fontSize: 11, marginTop: 4 },
+  inviteRight:       { alignItems: 'center', gap: 10 },
+  codeBox:           { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)' },
+  codeLabel:         { color: 'rgba(255,255,255,0.6)', fontSize: 10, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
+  codeValue:         { color: 'white', fontSize: 22, fontWeight: '900', letterSpacing: 3 },
+  shareBtn:          { backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' },
+  shareBtnText:      { color: 'white', fontSize: 13, fontWeight: '700' },
 
   // Around Jerusalem
   offersSection:     { marginTop: 20 },

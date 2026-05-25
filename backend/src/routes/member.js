@@ -119,4 +119,25 @@ router.get('/businesses', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// GET /api/member/referral — referral code + friends count
+router.get('/referral', async (req, res, next) => {
+  try {
+    const memberRes = await db.query(
+      'SELECT member_code FROM members WHERE id=$1',
+      [req.member.sub],
+    );
+    if (!memberRes.rows.length) return res.status(404).json({ error: 'Member not found' });
+
+    const countRes = await db.query(
+      'SELECT COUNT(*) FROM referrals WHERE referrer_id=$1',
+      [req.member.sub],
+    );
+
+    res.json({
+      referral_code: memberRes.rows[0].member_code,
+      friends_count: parseInt(countRes.rows[0].count),
+    });
+  } catch (e) { next(e); }
+});
+
 module.exports = router;
