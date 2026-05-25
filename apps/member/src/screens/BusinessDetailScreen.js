@@ -36,16 +36,19 @@ export default function BusinessDetailScreen({ route, navigation }) {
   const { businessId } = route.params;
   const { token } = useAuth();
   const [business, setBusiness] = useState(null);
-  const [loading, setLoading]   = useState(true);
+  const [offers,   setOffers]   = useState([]);
+  const [loading,  setLoading]  = useState(true);
   const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
     (async () => {
       try {
-        const api = token ? memberApi : pubApi;
-        // fetch single business — public endpoint
-        const res = await pubApi.business(businessId);
-        setBusiness(res.data);
+        const [bizRes, offersRes] = await Promise.all([
+          pubApi.business(businessId),
+          pubApi.businessOffers(businessId),
+        ]);
+        setBusiness(bizRes.data);
+        setOffers(offersRes.data);
       } catch {
       } finally {
         setLoading(false);
@@ -168,6 +171,28 @@ export default function BusinessDetailScreen({ route, navigation }) {
             </Section>
           )}
 
+          {/* Offers */}
+          {offers.length > 0 && (
+            <Section title="Offers & Deals">
+              {offers.map(offer => (
+                <View key={offer.id} style={styles.offerCard}>
+                  {!!offer.image_url && (
+                    <Image source={{ uri: offer.image_url }} style={styles.offerImage} resizeMode="cover" />
+                  )}
+                  <View style={styles.offerBody}>
+                    <Text style={styles.offerTitle}>{offer.title}</Text>
+                    {!!offer.description && <Text style={styles.offerDesc}>{offer.description}</Text>}
+                    {!!offer.valid_until && (
+                      <Text style={styles.offerDate}>
+                        Until {new Date(offer.valid_until).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              ))}
+            </Section>
+          )}
+
           {/* Menu */}
           {!!business.menu_url && (
             <TouchableOpacity
@@ -239,4 +264,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   menuBtnText: { color: '#fff', fontSize: 16, fontWeight: '800', letterSpacing: 0.3 },
+
+  offerCard:  { backgroundColor: '#F0FAF5', borderRadius: 14, overflow: 'hidden', marginBottom: 12 },
+  offerImage: { width: '100%', height: 160 },
+  offerBody:  { padding: 14, gap: 4 },
+  offerTitle: { fontSize: 15, fontWeight: '800', color: '#1B4332' },
+  offerDesc:  { fontSize: 13, color: '#444', lineHeight: 19 },
+  offerDate:  { fontSize: 12, color: '#2D6A4F', fontWeight: '600', marginTop: 4 },
 });

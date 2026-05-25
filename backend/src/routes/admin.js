@@ -522,6 +522,121 @@ router.get('/export/transactions', authAdmin, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// ─── Business Change Requests ────────────────────────────────────────────────
+
+// GET /admin/requests?status=pending  — all profile + offer requests combined
+router.get('/requests', authAdmin, async (req, res, next) => {
+  try {
+    const status = req.query.status || 'pending';
+    const { rows: profileReqs } = await db.query(
+      `SELECT pr.*, b.name AS business_name, s.name AS submitted_by_name
+       FROM business_profile_requests pr
+       JOIN businesses b ON b.id = pr.business_id
+       LEFT JOIN staff s ON s.id = pr.submitted_by
+       WHERE pr.status = $1 ORDER BY pr.created_at DESC`,
+      [status],
+    );
+    const { rows: offerReqs } = await db.query(
+      `SELECT orq.*, b.name AS business_name, s.name AS submitted_by_name,
+              o.title AS current_title
+       FROM offer_requests orq
+       JOIN businesses b ON b.id = orq.business_id
+       LEFT JOIN staff s ON s.id = orq.submitted_by
+       LEFT JOIN offers o ON o.id = orq.offer_id
+       WHERE orq.status = $1 ORDER BY orq.created_at DESC`,
+      [status],
+    );
+    res.json({ profileRequests: profileReqs, offerRequests: offerReqs });
+  } catch (e) { next(e); }
+});
+
+// GET /admin/requests/pending-count
+router.get('/requests/pending-count', authAdmin, async (req, res, next) => {
+  try {
+    const { rows: [pr] } = await db.query(`SELECT COUNT(*) AS c FROM business_profile_requests WHERE status='pending'`);
+    const { rows: [or] } = await db.query(`SELECT COUNT(*) AS c FROM offer_requests WHERE status='pending'`);
+    res.json({ count: parseInt(pr.c) + parseInt(or.c) });
+  } catch (e) { next(e); }
+});
+
+// PATCH /admin/profile-requests/:id/approve
+router.patch('/profile-requests/:id/approve', authAdmin, async (req, res, next) => {
+  try {
+    const { rows: [req_] } = await db.query(`SELECT * FROM business_profile_requests WHERE id=$1`, [req.params.id]);
+    if (!req_) return res.status(404).json({ error: 'Request not found.' });
+    if (req_.status !== 'pending') return res.status(409).json({ error: `Already ${req_.status}.` });
+
+    const updates = [];
+    const params  = [];
+    const fields  = ['logo_url','cover_url','description','hours','phone','website','instagram'];
+    fields.forEach(f => { if (req_[f]) { params.push(req_[f]); updates.push(`${f}=$${params.length}`); } });
+
+    if (updates.length) {
+      params.push(req_.business_id);
+      await db.query(`UPDATE businesses SET ${updates.join(',')} WHERE id=$${params.length}`, params);
+    }
+    await db.query(`UPDATE business_profile_requests SET status='approved', reviewed_at=NOW() WHERE id=$1`, [req_.id]);
+    res.json({ message: 'Profile updated.' });
+  } catch (e) { next(e); }
+});
+
+// PATCH /admin/profile-requests/:id/reject
+router.patch('/profile-requests/:id/reject', authAdmin, async (req, res, next) => {
+  try {
+    const { notes } = req.body;
+    const { rows: [req_] } = await db.query(`SELECT id, status FROM business_profile_requests WHERE id=$1`, [req.params.id]);
+    if (!req_) return res.status(404).json({ error: 'Request not found.' });
+    if (req_.status !== 'pending') return res.status(409).json({ error: `Already ${req_.status}.` });
+    await db.query(`UPDATE business_profile_requests SET status='rejected', notes=$1, reviewed_at=NOW() WHERE id=$2`, [notes||null, req_.id]);
+    res.json({ message: 'Request rejected.' });
+  } catch (e) { next(e); }
+});
+
+// PATCH /admin/offer-requests/:id/approve
+router.patch('/offer-requests/:id/approve', authAdmin, async (req, res, next) => {
+  const client = await db.getClient();
+  try {
+    await client.query('BEGIN');
+    const { rows: [orq] } = await client.query(`SELECT * FROM offer_requests WHERE id=$1 FOR UPDATE`, [req.params.id]);
+    if (!orq) return res.status(404).json({ error: 'Request not found.' });
+    if (orq.status !== 'pending') return res.status(409).json({ error: `Already ${orq.status}.` });
+
+    if (orq.action === 'create') {
+      await client.query(
+        `INSERT INTO offers (business_id, title, description, image_url, valid_from, valid_until)
+         VALUES ($1,$2,$3,$4,$5,$6)`,
+        [orq.business_id, orq.title, orq.description, orq.image_url, orq.valid_from, orq.valid_until],
+      );
+    } else if (orq.action === 'edit') {
+      await client.query(
+        `UPDATE offers SET title=$1, description=$2, image_url=$3, valid_from=$4, valid_until=$5 WHERE id=$6`,
+        [orq.title, orq.description, orq.image_url, orq.valid_from, orq.valid_until, orq.offer_id],
+      );
+    } else if (orq.action === 'delete') {
+      await client.query(`UPDATE offers SET is_active=FALSE WHERE id=$1`, [orq.offer_id]);
+    }
+
+    await client.query(`UPDATE offer_requests SET status='approved', reviewed_at=NOW() WHERE id=$1`, [orq.id]);
+    await client.query('COMMIT');
+    res.json({ message: `Offer ${orq.action} approved.` });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    next(e);
+  } finally { client.release(); }
+});
+
+// PATCH /admin/offer-requests/:id/reject
+router.patch('/offer-requests/:id/reject', authAdmin, async (req, res, next) => {
+  try {
+    const { notes } = req.body;
+    const { rows: [orq] } = await db.query(`SELECT id, status FROM offer_requests WHERE id=$1`, [req.params.id]);
+    if (!orq) return res.status(404).json({ error: 'Request not found.' });
+    if (orq.status !== 'pending') return res.status(409).json({ error: `Already ${orq.status}.` });
+    await db.query(`UPDATE offer_requests SET status='rejected', notes=$1, reviewed_at=NOW() WHERE id=$2`, [notes||null, orq.id]);
+    res.json({ message: 'Request rejected.' });
+  } catch (e) { next(e); }
+});
+
 // ─── Business Applications ────────────────────────────────────────────────────
 
 // GET /admin/applications?status=pending|approved|rejected

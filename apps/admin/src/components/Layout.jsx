@@ -2,21 +2,26 @@ import { useNavigate, NavLink } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import api from '../api';
 
-function usePendingCount() {
-  const [count, setCount] = useState(0);
+function usePendingCounts() {
+  const [appCount, setAppCount]   = useState(0);
+  const [reqCount, setReqCount]   = useState(0);
   useEffect(() => {
     if (!localStorage.getItem('admin_token')) return;
-    api.get('/admin/applications/pending-count')
-      .then(({ data }) => setCount(data.count))
-      .catch(() => {});
+    api.get('/admin/applications/pending-count').then(({ data }) => setAppCount(data.count)).catch(() => {});
+    api.get('/admin/requests/pending-count').then(({ data }) => setReqCount(data.count)).catch(() => {});
   }, []);
-  return count;
+  return { appCount, reqCount };
 }
+
+const badgeStyle = {
+  background: '#f59e0b', color: '#fff', borderRadius: 10,
+  fontSize: 11, fontWeight: 700, padding: '1px 7px', lineHeight: '18px',
+};
 
 export default function Layout({ title, actions, children }) {
   const navigate = useNavigate();
   const admin = JSON.parse(localStorage.getItem('admin_user') || '{}');
-  const pendingCount = usePendingCount();
+  const { appCount, reqCount } = usePendingCounts();
 
   function logout() {
     localStorage.removeItem('admin_token');
@@ -37,19 +42,11 @@ export default function Layout({ title, actions, children }) {
           <NavLink to="/analytics">Analytics</NavLink>
           <NavLink to="/applications" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             Applications
-            {pendingCount > 0 && (
-              <span style={{
-                background: '#f59e0b',
-                color: '#fff',
-                borderRadius: 10,
-                fontSize: 11,
-                fontWeight: 700,
-                padding: '1px 7px',
-                lineHeight: '18px',
-              }}>
-                {pendingCount}
-              </span>
-            )}
+            {appCount > 0 && <span style={badgeStyle}>{appCount}</span>}
+          </NavLink>
+          <NavLink to="/requests" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            Requests
+            {reqCount > 0 && <span style={badgeStyle}>{reqCount}</span>}
           </NavLink>
         </nav>
         <div className="sidebar-footer">

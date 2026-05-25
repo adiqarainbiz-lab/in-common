@@ -30,7 +30,8 @@ app.use('/api/admin',      require('./routes/admin'));
 app.use('/api/member',     require('./routes/member'));
 app.use('/api/staff',      require('./routes/staff'));
 app.use('/api/businesses', require('./routes/businesses'));
-app.use('/api/apply',      require('./routes/apply'));
+app.use('/api/apply',           require('./routes/apply'));
+app.use('/api/business-portal', require('./routes/businessPortal'));
 
 app.get('/api/health', (_, res) => res.json({ status: 'ok', ts: new Date() }));
 

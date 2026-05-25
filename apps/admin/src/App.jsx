@@ -7,6 +7,7 @@ import Analytics from './pages/Analytics';
 import Members from './pages/Members';
 import MemberDetail from './pages/MemberDetail';
 import Applications from './pages/Applications';
+import Requests from './pages/Requests';
 
 function PrivateRoute({ children }) {
   return localStorage.getItem('admin_token') ? children : <Navigate to="/login" replace />;
@@ -27,6 +28,7 @@ export default function App() {
         <Route path="/members" element={<PrivateRoute><Members /></PrivateRoute>} />
         <Route path="/members/:id" element={<PrivateRoute><MemberDetail /></PrivateRoute>} />
         <Route path="/applications" element={<PrivateRoute><Applications /></PrivateRoute>} />
+        <Route path="/requests"     element={<PrivateRoute><Requests /></PrivateRoute>} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

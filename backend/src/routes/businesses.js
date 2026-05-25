@@ -32,4 +32,19 @@ router.get('/:id', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// GET /api/businesses/:id/offers
+router.get('/:id/offers', async (req, res, next) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT id, title, description, image_url, valid_from, valid_until
+       FROM offers
+       WHERE business_id = $1 AND is_active = TRUE
+         AND (valid_until IS NULL OR valid_until >= CURRENT_DATE)
+       ORDER BY created_at DESC`,
+      [req.params.id],
+    );
+    res.json(rows);
+  } catch (e) { next(e); }
+});
+
 module.exports = router;

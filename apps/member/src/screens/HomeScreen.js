@@ -152,7 +152,7 @@ export default function HomeScreen({ navigation }) {
               renderItem={({ item }) => (
                 <OfferCard
                   biz={item}
-                  onPress={() => navigation.navigate('BusinessDetail', { business: item })}
+                  onPress={() => navigation.navigate('BusinessDetail', { businessId: item.id })}
                 />
               )}
             />
