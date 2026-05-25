@@ -10,7 +10,24 @@ const pool = process.env.DATABASE_URL
       database: process.env.DB_NAME, user: process.env.DB_USER, password: process.env.DB_PASSWORD,
     });
 
+async function waitForDb(retries = 10, delayMs = 3000) {
+  for (let i = 1; i <= retries; i++) {
+    try {
+      await pool.query('SELECT 1');
+      return; // connected
+    } catch (e) {
+      if (i === retries) throw e;
+      console.log(`DB not ready (attempt ${i}/${retries}), retrying in ${delayMs / 1000}s… [${e.message}]`);
+      await new Promise(r => setTimeout(r, delayMs));
+    }
+  }
+}
+
 async function run() {
+  console.log('Waiting for database…');
+  await waitForDb();
+  console.log('Database ready.');
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS _migrations (
       filename TEXT PRIMARY KEY,
