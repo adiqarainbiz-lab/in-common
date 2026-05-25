@@ -12,10 +12,11 @@ function syncPushToken() {
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [token,   setToken]   = useState(null);
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [isGuest, setIsGuest] = useState(false);
+  const [token,           setToken]           = useState(null);
+  const [profile,         setProfile]         = useState(null);
+  const [loading,         setLoading]         = useState(true);
+  const [isGuest,         setIsGuest]         = useState(false);
+  const [showOnboarding,  setShowOnboarding]  = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -42,12 +43,22 @@ export function AuthProvider({ children }) {
 
   const login = async (phone, otp, name) => {
     const res = await authApi.verifyOTP(phone, otp, name);
-    const { token: t, member: m } = res.data;
+    const { token: t, member: m, is_new } = res.data;
     await AsyncStorage.setItem('member_token', t);
     setToken(t);
     setProfile(m);
     syncPushToken();
+    // Show onboarding for brand-new members (or if they've never seen it)
+    if (is_new) {
+      const seen = await AsyncStorage.getItem('onboarding_seen');
+      if (!seen) setShowOnboarding(true);
+    }
     return m;
+  };
+
+  const markOnboardingSeen = async () => {
+    await AsyncStorage.setItem('onboarding_seen', '1');
+    setShowOnboarding(false);
   };
 
   const logout = async () => {
@@ -72,7 +83,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ token, profile, loading, isGuest, requestOTP, login, logout, refreshProfile, updateProfile, continueAsGuest, exitGuest }}>
+    <AuthContext.Provider value={{ token, profile, loading, isGuest, showOnboarding, requestOTP, login, logout, refreshProfile, updateProfile, continueAsGuest, exitGuest, markOnboardingSeen }}>
       {children}
     </AuthContext.Provider>
   );

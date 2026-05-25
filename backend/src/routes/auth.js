@@ -45,6 +45,7 @@ router.post('/member/verify-otp', async (req, res, next) => {
     if (!otpRes.rows.length) return res.status(401).json({ error: 'Invalid or expired OTP' });
 
     let member = (await db.query('SELECT * FROM members WHERE phone_number=$1', [phone_number])).rows[0];
+    let is_new = false;
 
     if (!member) {
       // Don't consume the OTP yet — let the client re-submit with a name
@@ -56,6 +57,7 @@ router.post('/member/verify-otp', async (req, res, next) => {
         [phone_number, name, secret, memberCode],
       );
       member = result.rows[0];
+      is_new = true;
     }
 
     // Consume OTP only after we know auth will succeed
@@ -67,7 +69,7 @@ router.post('/member/verify-otp', async (req, res, next) => {
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' },
     );
 
-    res.json({ token, member: sanitizeMember(member) });
+    res.json({ token, member: sanitizeMember(member), is_new });
   } catch (e) { next(e); }
 });
 

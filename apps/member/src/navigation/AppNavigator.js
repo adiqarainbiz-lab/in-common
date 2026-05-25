@@ -4,7 +4,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuth } from '../context/AuthContext';
-import AuthScreen        from '../screens/AuthScreen';
+import AuthScreen         from '../screens/AuthScreen';
+import OnboardingScreen  from '../screens/OnboardingScreen';
 import HomeScreen        from '../screens/HomeScreen';
 import QRScreen          from '../screens/QRScreen';
 import BusinessesScreen  from '../screens/BusinessesScreen';
@@ -51,7 +52,7 @@ function GuestSignInButton() {
 }
 
 export default function AppNavigator() {
-  const { token, isGuest, loading } = useAuth();
+  const { token, isGuest, loading, showOnboarding } = useAuth();
   if (loading) return null;
 
   return (
@@ -59,6 +60,9 @@ export default function AppNavigator() {
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {token ? (
           <>
+            {showOnboarding && (
+              <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+            )}
             <Stack.Screen name="Main"           component={Tabs} />
             <Stack.Screen name="EditProfile"    component={EditProfileScreen} />
             <Stack.Screen name="BusinessDetail" component={BusinessDetailScreen} options={{ headerShown: false }} />
