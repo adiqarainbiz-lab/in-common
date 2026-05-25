@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
@@ -15,9 +15,21 @@ export default function AuthScreen() {
   const [phone,   setPhone]   = useState('');
   const [otp,     setOtp]     = useState('');
   const [name,    setName]    = useState('');
-  const [loading, setLoading] = useState(false);
-  const [devOtp,  setDevOtp]  = useState('');
-  const [error,   setError]   = useState('');
+  const [loading,  setLoading]  = useState(false);
+  const [devOtp,   setDevOtp]   = useState('');
+  const [error,    setError]    = useState('');
+  const [slowConn, setSlowConn] = useState(false);
+  const slowTimer = useRef(null);
+
+  useEffect(() => {
+    if (loading) {
+      slowTimer.current = setTimeout(() => setSlowConn(true), 5000);
+    } else {
+      clearTimeout(slowTimer.current);
+      setSlowConn(false);
+    }
+    return () => clearTimeout(slowTimer.current);
+  }, [loading]);
 
   function switchMode(next) {
     setMode(next);
@@ -122,7 +134,12 @@ export default function AuthScreen() {
                 returnKeyType="go"
               />
               {error ? <Text style={styles.error}>{error}</Text> : null}
-              {loading ? <ActivityIndicator color="#2D6A4F" /> : (
+              {loading ? (
+                <>
+                  <ActivityIndicator color="#2D6A4F" />
+                  {slowConn && <Text style={styles.slowHint}>⏳ Waking up server, please wait…</Text>}
+                </>
+              ) : (
                 <TouchableOpacity style={styles.btn} onPress={handlePhone}>
                   <Text style={styles.btnText}>Send Code</Text>
                 </TouchableOpacity>
@@ -146,7 +163,12 @@ export default function AuthScreen() {
                 returnKeyType="go"
               />
               {error ? <Text style={styles.error}>{error}</Text> : null}
-              {loading ? <ActivityIndicator color="#2D6A4F" /> : (
+              {loading ? (
+                <>
+                  <ActivityIndicator color="#2D6A4F" />
+                  {slowConn && <Text style={styles.slowHint}>⏳ Waking up server, please wait…</Text>}
+                </>
+              ) : (
                 <TouchableOpacity style={styles.btn} onPress={handleOTP}>
                   <Text style={styles.btnText}>{mode === 'signup' ? 'Join In Common' : 'Verify'}</Text>
                 </TouchableOpacity>
@@ -212,4 +234,5 @@ const styles = StyleSheet.create({
   guestText:        { color: '#FFFFFFCC', fontSize: 15, fontWeight: '500' },
   footer:           { textAlign: 'center', color: '#FFFFFF66', marginTop: 16, fontSize: 13 },
   error:            { color: '#D62828', fontSize: 13, textAlign: 'center' },
+  slowHint:         { color: '#888', fontSize: 13, textAlign: 'center', marginTop: 6 },
 });
