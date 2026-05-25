@@ -1,13 +1,41 @@
 # In Common — Claude Code Guide
 
+---
+
+## 🔖 WHERE WE LEFT OFF
+> **Update this section at the end of every session.**
+
+**Last session:** 2026-05-25
+**Last commit:** `f40f488` — Add render.yaml for backend + admin dashboard deployment
+
+**Current status:**
+- Backend + admin dashboard deployed to Render: https://in-common-1.onrender.com
+- All 4 apps exist (backend, member app, staff app, admin dashboard)
+- Core feature set is complete — auth, QR scanning, points, tiers, transactions, reversals, push notifications, analytics, admin CRUD
+
+**Next up / in progress:**
+- Nothing in progress — session ended after setting up local clone and memory tooling
+- Ask the user what to tackle next
+
+**Known issues / notes:**
+- Render free tier spins down — first request after inactivity is slow
+- Android Studio project at `C:\Users\adiqa\AndroidStudioProjects\InCommon` is an old abandoned prototype — ignore it
+
+---
+
 ## Project Overview
-Community loyalty platform for Palestinian-owned businesses in Jerusalem. Members earn "Common Points" at partner businesses by scanning a rotating QR code and redeem them as in-store credit.
+Community loyalty platform for Palestinian-owned businesses in Jerusalem. Members earn "Common Points" at partner businesses by scanning a rotating QR code and redeem them as in-store credit. No bank account required.
 
 **Monorepo structure:**
 - `backend/` — Node.js/Express REST API
 - `apps/member/` — React Native member app (Expo)
 - `apps/staff/` — React Native staff scanner app (Expo)
 - `apps/admin/` — React (Vite) admin dashboard (web)
+
+**Live URLs:**
+- Backend API: https://in-common-1.onrender.com
+- Carrd landing page: https://in-common.carrd.co
+- GitHub: https://github.com/adiqarainbiz-lab/in-common
 
 ---
 
@@ -127,6 +155,10 @@ Both apps share the same structure and stack:
 - Members earn points at a per-business rate when staff scans their QR
 - Points expire after 18 months of inactivity (cron job in `breakageService.js`)
 - Tiers are calculated in `pointsService.js` based on cumulative balance
+
+**Tiers:** Seedling (0 pts) → Olive (500) → Cedar (2,000) → Keffiyeh (5,000+)
+**Earn rate:** 10 points per 1 JD spent
+**Redeem rate:** 10 points = 1 JD credit
 
 ---
 

@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "cd C:\\Users\\adiqa\\Projects\\in-common; $log = git log --oneline -5; $status = git status --short; $date = Get-Date -Format 'yyyy-MM-dd HH:mm'; $content = \"Last auto-captured: $date`n`nRecent commits:`n$log`n`nWorking tree:`n$(if ($status) { $status } else { '(clean)' })\"; $content | Out-File -FilePath '.claude\\session-state.txt' -Encoding utf8",
+            "statusMessage": "Saving session state..."
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "cd C:\\Users\\adiqa\\Projects\\in-common; if (Test-Path '.claude\\session-state.txt') { $content = Get-Content '.claude\\session-state.txt' -Raw; $ctx = \"## In Common - Last Session Snapshot`n$content\"; $out = [pscustomobject]@{hookSpecificOutput=[pscustomobject]@{hookEventName='SessionStart';additionalContext=$ctx}} | ConvertTo-Json -Compress -Depth 5; Write-Output $out }",
+            "statusMessage": "Loading session state..."
+          }
+        ]
+      }
+    ]
+  }
+}
