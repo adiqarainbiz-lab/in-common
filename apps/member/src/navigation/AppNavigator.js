@@ -8,6 +8,7 @@ import AuthScreen         from '../screens/AuthScreen';
 import OnboardingScreen  from '../screens/OnboardingScreen';
 import HomeScreen        from '../screens/HomeScreen';
 import QRScreen          from '../screens/QRScreen';
+import DealsScreen       from '../screens/DealsScreen';
 import BusinessesScreen  from '../screens/BusinessesScreen';
 import HistoryScreen     from '../screens/HistoryScreen';
 import EditProfileScreen      from '../screens/EditProfileScreen';
@@ -34,19 +35,19 @@ function Tabs() {
         tabBarInactiveTintColor: '#AAA',
         tabBarStyle: { borderTopWidth: 0, elevation: 16, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 16 },
         tabBarLabel: ({ color }) => {
-          const labels = { Home: 'Home', QR: 'My QR', Businesses: 'Businesses', History: 'History' };
+          const labels = { Home: 'Home', QR: 'My QR', Deals: 'Deals', History: 'History' };
           return <Text style={{ color, fontSize: 11, fontWeight: '600' }}>{labels[route.name]}</Text>;
         },
         tabBarIcon: ({ color }) => {
-          const icons = { Home: '🏠', QR: '📱', Businesses: '🏪', History: '📜' };
+          const icons = { Home: '🏠', QR: '📱', Deals: '🏷️', History: '📜' };
           return <Text style={{ fontSize: 22 }}>{icons[route.name]}</Text>;
         },
       })}
     >
-      <Tab.Screen name="Home"       component={HomeScreen} />
-      <Tab.Screen name="QR"         component={QRScreen} />
-      <Tab.Screen name="Businesses" component={BusinessesScreen} />
-      <Tab.Screen name="History"    component={HistoryScreen} />
+      <Tab.Screen name="Home"    component={HomeScreen} />
+      <Tab.Screen name="QR"      component={QRScreen} />
+      <Tab.Screen name="Deals"   component={DealsScreen} />
+      <Tab.Screen name="History" component={HistoryScreen} />
     </Tab.Navigator>
   );
 }
@@ -74,6 +75,7 @@ export default function AppNavigator() {
             )}
             <Stack.Screen name="Main"           component={Tabs} />
             <Stack.Screen name="EditProfile"    component={EditProfileScreen} />
+            <Stack.Screen name="Businesses"     component={BusinessesScreen} />
             <Stack.Screen name="BusinessDetail" component={BusinessDetailScreen} options={{ headerShown: false }} />
           </>
         ) : isGuest ? (

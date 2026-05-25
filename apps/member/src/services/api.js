@@ -30,6 +30,7 @@ export const pub = {
   businesses:     (category) => api.get(`/businesses${category ? `?category=${category}` : ''}`),
   business:       (id)       => api.get(`/businesses/${id}`),
   businessOffers: (id)       => api.get(`/businesses/${id}/offers`),
+  allOffers:      ()         => api.get('/businesses/offers'),
 };
 
 export default api;

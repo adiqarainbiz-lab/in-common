@@ -20,6 +20,24 @@ router.get('/', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// GET /api/businesses/offers — all active offers across all businesses (must be before /:id)
+router.get('/offers', async (req, res, next) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT o.id, o.title, o.description, o.image_url, o.valid_from, o.valid_until,
+              b.id AS business_id, b.name AS business_name,
+              b.logo_url AS business_logo, b.category AS business_category
+       FROM offers o
+       JOIN businesses b ON b.id = o.business_id
+       WHERE o.is_active = TRUE
+         AND b.is_active = TRUE
+         AND (o.valid_until IS NULL OR o.valid_until >= CURRENT_DATE)
+       ORDER BY o.created_at DESC`,
+    );
+    res.json(rows);
+  } catch (e) { next(e); }
+});
+
 // GET /api/businesses/:id
 router.get('/:id', async (req, res, next) => {
   try {
