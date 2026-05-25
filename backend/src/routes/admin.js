@@ -522,4 +522,91 @@ router.get('/export/transactions', authAdmin, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// ─── Business Applications ────────────────────────────────────────────────────
+
+// GET /admin/applications?status=pending|approved|rejected
+router.get('/applications', authAdmin, async (req, res, next) => {
+  try {
+    const { status } = req.query;
+    const conditions = [];
+    const params = [];
+    if (status) { params.push(status); conditions.push(`status = $${params.length}`); }
+    const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+    const { rows } = await db.query(
+      `SELECT * FROM business_applications ${where} ORDER BY created_at DESC`,
+      params,
+    );
+    res.json(rows);
+  } catch (e) { next(e); }
+});
+
+// GET /admin/applications/pending-count  — for sidebar badge
+router.get('/applications/pending-count', authAdmin, async (req, res, next) => {
+  try {
+    const { rows: [row] } = await db.query(
+      `SELECT COUNT(*) AS count FROM business_applications WHERE status = 'pending'`,
+    );
+    res.json({ count: parseInt(row.count, 10) });
+  } catch (e) { next(e); }
+});
+
+// PATCH /admin/applications/:id/approve
+router.patch('/applications/:id/approve', authAdmin, async (req, res, next) => {
+  const client = await db.getClient();
+  try {
+    await client.query('BEGIN');
+
+    const { rows: [app] } = await client.query(
+      `SELECT * FROM business_applications WHERE id = $1 FOR UPDATE`,
+      [req.params.id],
+    );
+    if (!app)                    return res.status(404).json({ error: 'Application not found.' });
+    if (app.status !== 'pending') return res.status(409).json({ error: `Application is already ${app.status}.` });
+
+    const { points_rate = 10 } = req.body; // admin can optionally override
+
+    const { rows: [biz] } = await client.query(
+      `INSERT INTO businesses (name, category, address, description, points_rate)
+       VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+      [app.name, app.category, app.address, app.description, points_rate],
+    );
+
+    await client.query(
+      `UPDATE business_applications
+         SET status = 'approved', reviewed_at = NOW(), business_id = $1
+       WHERE id = $2`,
+      [biz.id, app.id],
+    );
+
+    await client.query('COMMIT');
+    res.json({ business_id: biz.id, message: 'Business created and application approved.' });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    next(e);
+  } finally {
+    client.release();
+  }
+});
+
+// PATCH /admin/applications/:id/reject
+router.patch('/applications/:id/reject', authAdmin, async (req, res, next) => {
+  try {
+    const { notes } = req.body;
+    const { rows: [app] } = await db.query(
+      `SELECT * FROM business_applications WHERE id = $1`,
+      [req.params.id],
+    );
+    if (!app)                    return res.status(404).json({ error: 'Application not found.' });
+    if (app.status !== 'pending') return res.status(409).json({ error: `Application is already ${app.status}.` });
+
+    await db.query(
+      `UPDATE business_applications
+         SET status = 'rejected', notes = $1, reviewed_at = NOW()
+       WHERE id = $2`,
+      [notes || null, app.id],
+    );
+    res.json({ message: 'Application rejected.' });
+  } catch (e) { next(e); }
+});
+
 module.exports = router;
