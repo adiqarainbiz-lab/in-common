@@ -330,4 +330,196 @@ router.post('/transactions/:id/reverse', authAdmin, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// ─── Member management ────────────────────────────────────────────────────────
+
+// Edit member name / phone
+router.patch('/members/:id', authAdmin, async (req, res, next) => {
+  try {
+    const { name, phone_number } = req.body;
+    const existing = await db.query('SELECT * FROM members WHERE id=$1', [req.params.id]);
+    if (!existing.rows.length) return res.status(404).json({ error: 'Member not found' });
+    const m = existing.rows[0];
+
+    if (phone_number && phone_number !== m.phone_number) {
+      const conflict = await db.query('SELECT id FROM members WHERE phone_number=$1 AND id!=$2', [phone_number, req.params.id]);
+      if (conflict.rows.length) return res.status(409).json({ error: 'Phone number already in use' });
+    }
+
+    const result = await db.query(
+      `UPDATE members SET name=$1, phone_number=$2 WHERE id=$3
+       RETURNING id, name, phone_number, points_balance, tier, member_code, is_active, last_activity_at, created_at`,
+      [name ?? m.name, phone_number ?? m.phone_number, req.params.id],
+    );
+    res.json(result.rows[0]);
+  } catch (e) { next(e); }
+});
+
+// Activate / deactivate a member
+router.patch('/members/:id/status', authAdmin, async (req, res, next) => {
+  try {
+    const { is_active } = req.body;
+    if (typeof is_active !== 'boolean') return res.status(400).json({ error: 'is_active (boolean) required' });
+    const result = await db.query(
+      'UPDATE members SET is_active=$1 WHERE id=$2 RETURNING id, name, is_active',
+      [is_active, req.params.id],
+    );
+    if (!result.rows.length) return res.status(404).json({ error: 'Member not found' });
+    res.json(result.rows[0]);
+  } catch (e) { next(e); }
+});
+
+// Manual points adjustment (admin correction / promo)
+router.post('/members/:id/adjust', authAdmin, async (req, res, next) => {
+  try {
+    const { points, description } = req.body;
+    if (!Number.isInteger(points) || points === 0)
+      return res.status(400).json({ error: 'points must be a non-zero integer' });
+    if (!description?.trim())
+      return res.status(400).json({ error: 'description required' });
+
+    const client = await db.getClient();
+    try {
+      await client.query('BEGIN');
+
+      const memberRes = await client.query('SELECT points_balance FROM members WHERE id=$1 FOR UPDATE', [req.params.id]);
+      if (!memberRes.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Member not found' }); }
+
+      const current = memberRes.rows[0].points_balance;
+      if (current + points < 0)
+        return res.status(400).json({ error: `Cannot subtract ${Math.abs(points)} pts — member only has ${current}` });
+
+      await client.query(
+        `INSERT INTO transactions (member_id, type, points, description)
+         VALUES ($1, 'adjust', $2, $3)`,
+        [req.params.id, points, description.trim()],
+      );
+
+      const updated = await client.query(
+        `UPDATE members
+         SET points_balance   = points_balance + $1,
+             last_activity_at = NOW(),
+             tier = CASE
+               WHEN points_balance + $1 >= 5000 THEN 'Keffiyeh'
+               WHEN points_balance + $1 >= 2000 THEN 'Cedar'
+               WHEN points_balance + $1 >= 500  THEN 'Olive'
+               ELSE 'Seedling'
+             END
+         WHERE id = $2
+         RETURNING points_balance, tier`,
+        [points, req.params.id],
+      );
+
+      await client.query('COMMIT');
+      res.json({ adjusted: points, newBalance: updated.rows[0].points_balance, tier: updated.rows[0].tier });
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
+  } catch (e) { next(e); }
+});
+
+// Filtered transaction history for a member
+router.get('/members/:id/transactions', authAdmin, async (req, res, next) => {
+  try {
+    const { from, to, type, page = 1, limit = 50 } = req.query;
+    const offset = (Math.max(1, parseInt(page)) - 1) * Math.min(100, parseInt(limit));
+
+    const conditions = ['t.member_id = $1'];
+    const params = [req.params.id];
+    let i = 2;
+
+    if (from)  { conditions.push(`t.created_at >= $${i++}`); params.push(from); }
+    if (to)    { conditions.push(`t.created_at <  $${i++}`); params.push(to); }
+    if (type)  { conditions.push(`t.type = $${i++}`);        params.push(type); }
+
+    const where = conditions.join(' AND ');
+
+    const [rows, countRes] = await Promise.all([
+      db.query(
+        `SELECT t.id, t.type, t.points, t.description, t.created_at,
+                b.name AS business_name, s.name AS staff_name,
+                t.reversal_of,
+                EXISTS(SELECT 1 FROM transactions r WHERE r.reversal_of = t.id) AS is_reversed
+         FROM transactions t
+         LEFT JOIN businesses b ON t.business_id = b.id
+         LEFT JOIN staff s ON t.staff_id = s.id
+         WHERE ${where}
+         ORDER BY t.created_at DESC
+         LIMIT ${Math.min(100, parseInt(limit))} OFFSET ${offset}`,
+        params,
+      ),
+      db.query(`SELECT COUNT(*) FROM transactions t WHERE ${where}`, params),
+    ]);
+
+    res.json({ transactions: rows.rows, total: parseInt(countRes.rows[0].count) });
+  } catch (e) { next(e); }
+});
+
+// ─── CSV exports ──────────────────────────────────────────────────────────────
+
+function toCsv(headers, rows) {
+  const escape = (v) => {
+    if (v == null) return '';
+    const s = String(v);
+    return s.includes(',') || s.includes('"') || s.includes('\n')
+      ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  return [headers.join(','), ...rows.map(r => headers.map(h => escape(r[h])).join(','))].join('\n');
+}
+
+router.get('/export/members', authAdmin, async (req, res, next) => {
+  try {
+    const result = await db.query(
+      `SELECT id, name, phone_number, points_balance, tier, member_code,
+              is_active, last_activity_at, created_at
+       FROM members ORDER BY created_at DESC`,
+    );
+    const csv = toCsv(
+      ['id','name','phone_number','points_balance','tier','member_code','is_active','last_activity_at','created_at'],
+      result.rows,
+    );
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="in-common-members.csv"');
+    res.send(csv);
+  } catch (e) { next(e); }
+});
+
+router.get('/export/transactions', authAdmin, async (req, res, next) => {
+  try {
+    const { from, to, type, member_id } = req.query;
+    const conditions = ['1=1'];
+    const params = [];
+    let i = 1;
+
+    if (from)      { conditions.push(`t.created_at >= $${i++}`); params.push(from); }
+    if (to)        { conditions.push(`t.created_at <  $${i++}`); params.push(to); }
+    if (type)      { conditions.push(`t.type = $${i++}`);        params.push(type); }
+    if (member_id) { conditions.push(`t.member_id = $${i++}`);   params.push(member_id); }
+
+    const result = await db.query(
+      `SELECT t.id, t.type, t.points, t.description, t.created_at,
+              m.name AS member_name, m.phone_number AS member_phone,
+              b.name AS business_name, s.name AS staff_name,
+              t.reversal_of
+       FROM transactions t
+       LEFT JOIN members    m ON t.member_id   = m.id
+       LEFT JOIN businesses b ON t.business_id = b.id
+       LEFT JOIN staff      s ON t.staff_id    = s.id
+       WHERE ${conditions.join(' AND ')}
+       ORDER BY t.created_at DESC
+       LIMIT 50000`,
+      params,
+    );
+    const csv = toCsv(
+      ['id','type','points','description','created_at','member_name','member_phone','business_name','staff_name','reversal_of'],
+      result.rows,
+    );
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="in-common-transactions.csv"');
+    res.send(csv);
+  } catch (e) { next(e); }
+});
+
 module.exports = router;

@@ -40,9 +40,24 @@ export default function Members() {
 
   const totalPages = Math.ceil(total / LIMIT);
 
+  async function exportCsv() {
+    try {
+      const { data, headers } = await api.get('/admin/export/members', { responseType: 'blob' });
+      const url = URL.createObjectURL(new Blob([data], { type: 'text/csv' }));
+      const a = document.createElement('a');
+      a.href = url;
+      const date = new Date().toISOString().slice(0, 10);
+      a.download = `members-${date}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert('Export failed — please try again.');
+    }
+  }
+
   return (
     <Layout title="Members">
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
         <input
           className=""
           placeholder="Search by name or phone…"
@@ -50,9 +65,16 @@ export default function Members() {
           onChange={handleSearch}
           style={{ width: 300 }}
         />
-        <span style={{ marginLeft: 12, color: '#888', fontSize: 14 }}>
+        <span style={{ color: '#888', fontSize: 14 }}>
           {total} member{total !== 1 ? 's' : ''}
         </span>
+        <button
+          className="btn btn-sm btn-secondary"
+          onClick={exportCsv}
+          style={{ marginLeft: 'auto' }}
+        >
+          ⬇ Export CSV
+        </button>
       </div>
 
       {loading ? (
