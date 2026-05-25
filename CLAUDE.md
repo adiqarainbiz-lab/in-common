@@ -6,20 +6,22 @@
 > **Update this section at the end of every session.**
 
 **Last session:** 2026-05-25
-**Last commit:** `f40f488` — Add render.yaml for backend + admin dashboard deployment
+**Last commit:** `11aa117` — feat: add member onboarding flow for new signups
 
 **Current status:**
 - Backend + admin dashboard deployed to Render: https://in-common-1.onrender.com
 - All 4 apps exist (backend, member app, staff app, admin dashboard)
 - Core feature set is complete — auth, QR scanning, points, tiers, transactions, reversals, push notifications, analytics, admin CRUD
+- ✅ Onboarding flow added for new members (4-slide carousel, shows once per device)
 
 **Next up / in progress:**
-- Nothing in progress — session ended after setting up local clone and memory tooling
-- Ask the user what to tackle next
+- Onboarding polish is the current focus
+- Possible next steps: admin manual points adjustment, app store prep (EAS Build), business self-signup
 
 **Known issues / notes:**
 - Render free tier spins down — first request after inactivity is slow
 - Android Studio project at `C:\Users\adiqa\AndroidStudioProjects\InCommon` is an old abandoned prototype — ignore it
+- `is_new` flag now returned from `/auth/member/verify-otp` — used to trigger onboarding
 
 ---
 
