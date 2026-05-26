@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Image, TouchableOpacity,
-  ActivityIndicator, Linking,
+  ActivityIndicator, Linking, TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { pub as pubApi, member as memberApi } from '../services/api';
@@ -28,6 +28,37 @@ function Section({ title, children }) {
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
       {children}
+    </View>
+  );
+}
+
+function PointsCalculator({ pointsRate }) {
+  const [spend, setSpend] = useState('');
+  const earned = spend ? Math.round(parseFloat(spend) * pointsRate) : null;
+
+  return (
+    <View style={styles.calcCard}>
+      <Text style={styles.calcTitle}>💰 Points Calculator</Text>
+      <Text style={styles.calcSub}>How much will you earn?</Text>
+      <View style={styles.calcRow}>
+        <View style={styles.calcInputWrap}>
+          <Text style={styles.calcCurrency}>JD</Text>
+          <TextInput
+            style={styles.calcInput}
+            value={spend}
+            onChangeText={setSpend}
+            keyboardType="decimal-pad"
+            placeholder="0.00"
+            placeholderTextColor="#aaa"
+          />
+        </View>
+        <Text style={styles.calcArrow}>→</Text>
+        <View style={styles.calcResult}>
+          <Text style={styles.calcPts}>{earned !== null && !isNaN(earned) ? earned.toLocaleString() : '—'}</Text>
+          <Text style={styles.calcPtsLabel}>pts</Text>
+        </View>
+      </View>
+      <Text style={styles.calcRate}>Rate: {pointsRate} pts per JD spent</Text>
     </View>
   );
 }
@@ -171,6 +202,9 @@ export default function BusinessDetailScreen({ route, navigation }) {
             </Section>
           )}
 
+          {/* Points Calculator */}
+          <PointsCalculator pointsRate={business.points_rate} />
+
           {/* Offers */}
           {offers.length > 0 && (
             <Section title="Offers & Deals">
@@ -264,6 +298,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   menuBtnText: { color: '#fff', fontSize: 16, fontWeight: '800', letterSpacing: 0.3 },
+
+  // Calculator
+  calcCard:       { marginTop: 24, backgroundColor: '#F0FAF5', borderRadius: 18, padding: 18, gap: 6 },
+  calcTitle:      { fontSize: 15, fontWeight: '800', color: '#1B4332' },
+  calcSub:        { fontSize: 13, color: '#666', marginBottom: 8 },
+  calcRow:        { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  calcInputWrap:  { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, borderWidth: 1.5, borderColor: '#D0E8D8', gap: 6 },
+  calcCurrency:   { fontSize: 16, fontWeight: '700', color: '#2D6A4F' },
+  calcInput:      { flex: 1, fontSize: 20, fontWeight: '700', color: '#1B4332' },
+  calcArrow:      { fontSize: 20, color: '#2D6A4F', fontWeight: '700' },
+  calcResult:     { flex: 1, alignItems: 'center', backgroundColor: '#1B4332', borderRadius: 12, paddingVertical: 10 },
+  calcPts:        { fontSize: 22, fontWeight: '900', color: '#fff' },
+  calcPtsLabel:   { fontSize: 11, color: 'rgba(255,255,255,0.7)', fontWeight: '600' },
+  calcRate:       { fontSize: 11, color: '#888', marginTop: 4 },
 
   offerCard:  { backgroundColor: '#F0FAF5', borderRadius: 14, overflow: 'hidden', marginBottom: 12 },
   offerImage: { width: '100%', height: 160 },

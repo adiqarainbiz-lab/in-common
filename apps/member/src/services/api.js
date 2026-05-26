@@ -24,6 +24,8 @@ export const member = {
   transactions:  (page = 1)            => api.get(`/member/transactions?page=${page}`),
   businesses:    (category)            => api.get(`/member/businesses${category ? `?category=${category}` : ''}`),
   referral:      ()                     => api.get('/member/referral'),
+  achievements:  ()                     => api.get('/member/achievements'),
+  recommended:   ()                     => api.get('/member/recommended'),
 };
 
 export const pub = {

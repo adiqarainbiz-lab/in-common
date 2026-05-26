@@ -1,11 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   ActivityIndicator, RefreshControl, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { member as memberApi, pub as pubApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+
+const FAVS_KEY = 'fav_business_ids';
+
+async function loadFavIds() {
+  try { return JSON.parse(await AsyncStorage.getItem(FAVS_KEY) || '[]'); } catch { return []; }
+}
+async function saveFavIds(ids) {
+  await AsyncStorage.setItem(FAVS_KEY, JSON.stringify(ids));
+}
 
 const CATEGORIES = [
   { key: null,       label: 'All',      emoji: '🏙️' },
@@ -17,7 +27,7 @@ const CATEGORIES = [
 const CATEGORY_LABEL = { food: 'Food & Drink', services: 'Services', shop: 'Shop' };
 const CATEGORY_EMOJI = { food: '🍽️', services: '✂️', shop: '🛍️' };
 
-function BusinessCard({ item, onPress }) {
+function BusinessCard({ item, onPress, isFav, onToggleFav }) {
   const [imgError, setImgError] = useState(false);
   const label = CATEGORY_LABEL[item.category] || item.category;
   const emoji = CATEGORY_EMOJI[item.category] || '🏪';
@@ -27,41 +37,26 @@ function BusinessCard({ item, onPress }) {
       {/* Cover */}
       <View style={styles.coverWrap}>
         {item.cover_url && !imgError ? (
-          <Image
-            source={{ uri: item.cover_url }}
-            style={styles.cover}
-            resizeMode="cover"
-            onError={() => setImgError(true)}
-          />
+          <Image source={{ uri: item.cover_url }} style={styles.cover} resizeMode="cover" onError={() => setImgError(true)} />
         ) : (
           <View style={[styles.cover, styles.coverFallback]}>
             <Text style={styles.coverFallbackEmoji}>{emoji}</Text>
           </View>
         )}
-
-        {/* dark gradient at bottom of image */}
         <View style={styles.coverGradient} pointerEvents="none" />
-
-        {/* overlaid chips */}
         <View style={styles.chipRow} pointerEvents="none">
-          <View style={styles.chipCategory}>
-            <Text style={styles.chipText}>{label}</Text>
-          </View>
-          <View style={styles.chipPts}>
-            <Text style={styles.chipPtsText}>+{item.points_rate} pts</Text>
-          </View>
+          <View style={styles.chipCategory}><Text style={styles.chipText}>{label}</Text></View>
+          <View style={styles.chipPts}><Text style={styles.chipPtsText}>+{item.points_rate} pts</Text></View>
         </View>
+        {/* Favourite button */}
+        <TouchableOpacity style={styles.favBtn} onPress={onToggleFav} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Text style={styles.favIcon}>{isFav ? '❤️' : '🤍'}</Text>
+        </TouchableOpacity>
       </View>
-
-      {/* Body */}
       <View style={styles.cardBody}>
         <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
-        {!!item.address && (
-          <Text style={styles.cardAddress} numberOfLines={1}>📍 {item.address}</Text>
-        )}
-        {!!item.description && (
-          <Text style={styles.cardDesc} numberOfLines={2}>{item.description}</Text>
-        )}
+        {!!item.address    && <Text style={styles.cardAddress} numberOfLines={1}>📍 {item.address}</Text>}
+        {!!item.description && <Text style={styles.cardDesc} numberOfLines={2}>{item.description}</Text>}
       </View>
     </TouchableOpacity>
   );
@@ -73,22 +68,30 @@ export default function BusinessesScreen({ navigation }) {
   const [businesses, setBusinesses] = useState([]);
   const [loading,    setLoading]    = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [favIds,     setFavIds]     = useState([]);
+
+  useEffect(() => { loadFavIds().then(setFavIds); }, []);
 
   const load = async (cat, pull = false) => {
     if (pull) setRefreshing(true); else setLoading(true);
     try {
-      const res = token
-        ? await memberApi.businesses(cat)
-        : await pubApi.businesses(cat);
+      const res = token ? await memberApi.businesses(cat) : await pubApi.businesses(cat);
       setBusinesses(res.data);
-    } catch {
-    } finally {
+    } catch {} finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
+  async function toggleFav(id) {
+    const next = favIds.includes(id) ? favIds.filter(f => f !== id) : [...favIds, id];
+    setFavIds(next);
+    await saveFavIds(next);
+  }
+
   useEffect(() => { load(category); }, [category]);
+
+  const favBusinesses = businesses.filter(b => favIds.includes(b.id));
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -99,15 +102,9 @@ export default function BusinessesScreen({ navigation }) {
 
       <View style={styles.tabs}>
         {CATEGORIES.map((c) => (
-          <TouchableOpacity
-            key={String(c.key)}
-            style={[styles.tab, category === c.key && styles.tabActive]}
-            onPress={() => setCategory(c.key)}
-          >
+          <TouchableOpacity key={String(c.key)} style={[styles.tab, category === c.key && styles.tabActive]} onPress={() => setCategory(c.key)}>
             <Text style={styles.tabEmoji}>{c.emoji}</Text>
-            <Text style={[styles.tabLabel, category === c.key && styles.tabLabelActive]}>
-              {c.label}
-            </Text>
+            <Text style={[styles.tabLabel, category === c.key && styles.tabLabelActive]}>{c.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -117,25 +114,34 @@ export default function BusinessesScreen({ navigation }) {
       ) : (
         <FlatList
           data={businesses}
-          keyExtractor={(i) => i.id}
+          keyExtractor={i => i.id}
           renderItem={({ item }) => (
             <BusinessCard
               item={item}
+              isFav={favIds.includes(item.id)}
+              onToggleFav={() => toggleFav(item.id)}
               onPress={() => navigation.navigate('BusinessDetail', { businessId: item.id })}
             />
           )}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={() => load(category, true)}
-              tintColor="#2D6A4F"
-            />
-          }
-          ListEmptyComponent={
-            <Text style={styles.empty}>No businesses in this category yet.</Text>
-          }
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(category, true)} tintColor="#2D6A4F" />}
+          ListHeaderComponent={favBusinesses.length > 0 ? (
+            <View style={styles.favsSection}>
+              <Text style={styles.favsSectionTitle}>❤️ Your Favourites</Text>
+              {favBusinesses.map(item => (
+                <BusinessCard
+                  key={item.id}
+                  item={item}
+                  isFav={true}
+                  onToggleFav={() => toggleFav(item.id)}
+                  onPress={() => navigation.navigate('BusinessDetail', { businessId: item.id })}
+                />
+              ))}
+              <Text style={styles.favsAllTitle}>All Businesses</Text>
+            </View>
+          ) : null}
+          ListEmptyComponent={<Text style={styles.empty}>No businesses in this category yet.</Text>}
         />
       )}
     </SafeAreaView>
@@ -239,4 +245,10 @@ const styles = StyleSheet.create({
   cardDesc:    { fontSize: 13, color: '#555', lineHeight: 19, marginTop: 2 },
 
   empty: { textAlign: 'center', color: '#AAA', marginTop: 60, fontSize: 15 },
+
+  favBtn:          { position: 'absolute', bottom: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.35)', borderRadius: 99, width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
+  favIcon:         { fontSize: 16 },
+  favsSection:     { gap: 16, marginBottom: 8 },
+  favsSectionTitle:{ fontSize: 16, fontWeight: '800', color: '#1B4332', marginBottom: 4 },
+  favsAllTitle:    { fontSize: 16, fontWeight: '800', color: '#1B4332', marginTop: 8 },
 });

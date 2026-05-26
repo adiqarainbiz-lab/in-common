@@ -9,6 +9,8 @@ import { useAuth } from '../context/AuthContext';
 import TierBadge from '../components/TierBadge';
 import { pub, member as memberApi } from '../services/api';
 
+const CATEGORY_EMOJI = { food: '🍽️', services: '✂️', shop: '🛍️' };
+
 const { width: SCREEN_W } = Dimensions.get('window');
 const CARD_W = SCREEN_W * 0.52;
 const CARD_H = CARD_W * 1.3;
@@ -56,10 +58,12 @@ export default function HomeScreen({ navigation }) {
   const { profile } = useAuth();
   const [businesses,    setBusinesses]    = useState([]);
   const [referralStats, setReferralStats] = useState(null);
+  const [recommended,   setRecommended]   = useState([]);
 
   useEffect(() => {
     pub.businesses().then(r => setBusinesses(r.data)).catch(() => {});
     memberApi.referral().then(r => setReferralStats(r.data)).catch(() => {});
+    memberApi.recommended().then(r => setRecommended(r.data)).catch(() => {});
   }, []);
 
   async function handleShare() {
@@ -115,6 +119,26 @@ export default function HomeScreen({ navigation }) {
             </View>
           )}
         </View>
+
+        {/* ── Member stats row ─────────────────────────────────────── */}
+        {(profile.total_visits > 0 || profile.lifetime_points_earned > 0) && (
+          <View style={styles.memberStatsRow}>
+            <View style={styles.memberStat}>
+              <Text style={styles.memberStatVal}>{(profile.total_visits || 0)}</Text>
+              <Text style={styles.memberStatLabel}>visits</Text>
+            </View>
+            <View style={styles.memberStatDivider} />
+            <View style={styles.memberStat}>
+              <Text style={styles.memberStatVal}>{(profile.lifetime_points_earned || 0).toLocaleString()}</Text>
+              <Text style={styles.memberStatLabel}>pts earned ever</Text>
+            </View>
+            <View style={styles.memberStatDivider} />
+            <View style={styles.memberStat}>
+              <Text style={styles.memberStatVal}>{TIER_THRESHOLDS.find(t => profile.points_balance < t.pts)?.name || '🏅'}</Text>
+              <Text style={styles.memberStatLabel}>next tier</Text>
+            </View>
+          </View>
+        )}
 
         {/* ── First-visit nudge ────────────────────────────────────── */}
         {profile.points_balance === 0 && (
@@ -198,6 +222,46 @@ export default function HomeScreen({ navigation }) {
           </View>
         )}
 
+        {/* ── Recommended for you ──────────────────────────────────── */}
+        {recommended.length > 0 && (
+          <View style={styles.offersSection}>
+            <View style={styles.offersSectionHeader}>
+              <Text style={styles.offersSectionTitle}>Recommended for You</Text>
+            </View>
+            <FlatList
+              data={recommended}
+              keyExtractor={b => b.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.offersList}
+              snapToInterval={CARD_W + 12}
+              decelerationRate="fast"
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.recCard}
+                  onPress={() => navigation.navigate('BusinessDetail', { businessId: item.id })}
+                  activeOpacity={0.88}
+                >
+                  {item.cover_url || item.logo_url ? (
+                    <Image source={{ uri: item.cover_url || item.logo_url }} style={styles.recImage} resizeMode="cover" />
+                  ) : (
+                    <View style={[styles.recImage, { backgroundColor: '#D8F3DC', alignItems: 'center', justifyContent: 'center' }]}>
+                      <Text style={{ fontSize: 32 }}>{CATEGORY_EMOJI[item.category] || '🏪'}</Text>
+                    </View>
+                  )}
+                  <View style={styles.recBody}>
+                    <Text style={styles.recName} numberOfLines={1}>{item.name}</Text>
+                    <Text style={styles.recCategory}>{item.category}</Text>
+                    <View style={styles.recPill}>
+                      <Text style={styles.recPillText}>+{item.points_rate} pts/JD</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        )}
+
         {/* ── Tier ladder ──────────────────────────────────────────── */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Your Journey</Text>
@@ -263,6 +327,22 @@ const styles = StyleSheet.create({
   actionBtn:         { flex: 1, backgroundColor: 'white', borderRadius: 16, padding: 16, alignItems: 'center', gap: 8, elevation: 2, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8 },
   actionIcon:        { fontSize: 26 },
   actionLabel:       { fontSize: 12, color: '#333', fontWeight: '600' },
+
+  // Member stats row
+  memberStatsRow:    { flexDirection: 'row', marginHorizontal: 16, marginBottom: 8, backgroundColor: '#fff', borderRadius: 16, padding: 16, elevation: 2, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8 },
+  memberStat:        { flex: 1, alignItems: 'center', gap: 2 },
+  memberStatVal:     { fontSize: 18, fontWeight: '900', color: '#1B4332' },
+  memberStatLabel:   { fontSize: 11, color: '#888', fontWeight: '500' },
+  memberStatDivider: { width: 1, backgroundColor: '#F0F0F0' },
+
+  // Recommended cards
+  recCard:    { width: CARD_W, borderRadius: 18, backgroundColor: '#fff', overflow: 'hidden', elevation: 2, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 8 },
+  recImage:   { width: '100%', height: CARD_H * 0.65 },
+  recBody:    { padding: 10, gap: 3 },
+  recName:    { fontSize: 14, fontWeight: '800', color: '#1B4332' },
+  recCategory:{ fontSize: 11, color: '#888', textTransform: 'capitalize' },
+  recPill:    { alignSelf: 'flex-start', backgroundColor: '#E8F5E9', borderRadius: 99, paddingHorizontal: 8, paddingVertical: 3, marginTop: 2 },
+  recPillText:{ fontSize: 10, color: '#2D6A4F', fontWeight: '700' },
 
   // Invite Friends
   inviteCard:        { marginHorizontal: 16, marginTop: 16, borderRadius: 20, overflow: 'hidden', elevation: 3, shadowColor: '#000', shadowOpacity: 0.10, shadowRadius: 12 },

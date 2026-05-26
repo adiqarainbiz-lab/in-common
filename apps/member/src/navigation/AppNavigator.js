@@ -11,6 +11,7 @@ import QRScreen          from '../screens/QRScreen';
 import DealsScreen       from '../screens/DealsScreen';
 import BusinessesScreen  from '../screens/BusinessesScreen';
 import HistoryScreen     from '../screens/HistoryScreen';
+import ProfileScreen     from '../screens/ProfileScreen';
 import EditProfileScreen      from '../screens/EditProfileScreen';
 import BusinessDetailScreen  from '../screens/BusinessDetailScreen';
 
@@ -35,11 +36,11 @@ function Tabs() {
         tabBarInactiveTintColor: '#AAA',
         tabBarStyle: { borderTopWidth: 0, elevation: 16, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 16 },
         tabBarLabel: ({ color }) => {
-          const labels = { Home: 'Home', QR: 'My QR', Deals: 'Deals', History: 'History' };
+          const labels = { Home: 'Home', QR: 'My QR', Deals: 'Deals', History: 'History', Profile: 'Profile' };
           return <Text style={{ color, fontSize: 11, fontWeight: '600' }}>{labels[route.name]}</Text>;
         },
         tabBarIcon: ({ color }) => {
-          const icons = { Home: '🏠', QR: '📱', Deals: '🏷️', History: '📜' };
+          const icons = { Home: '🏠', QR: '📱', Deals: '🏷️', History: '📜', Profile: '👤' };
           return <Text style={{ fontSize: 22 }}>{icons[route.name]}</Text>;
         },
       })}
@@ -48,6 +49,7 @@ function Tabs() {
       <Tab.Screen name="QR"      component={QRScreen} />
       <Tab.Screen name="Deals"   component={DealsScreen} />
       <Tab.Screen name="History" component={HistoryScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }
