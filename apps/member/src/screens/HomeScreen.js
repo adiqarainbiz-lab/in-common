@@ -41,7 +41,7 @@ function OfferCard({ biz, onPress }) {
       >
         {/* Points rate pill */}
         <View style={styles.offerPill}>
-          <Text style={styles.offerPillText}>+{biz.points_rate} pts/JD</Text>
+          <Text style={styles.offerPillText}>+{biz.points_rate} pts/visit</Text>
         </View>
 
         {/* Bottom info */}
@@ -253,7 +253,7 @@ export default function HomeScreen({ navigation }) {
                     <Text style={styles.recName} numberOfLines={1}>{item.name}</Text>
                     <Text style={styles.recCategory}>{item.category}</Text>
                     <View style={styles.recPill}>
-                      <Text style={styles.recPillText}>+{item.points_rate} pts/JD</Text>
+                      <Text style={styles.recPillText}>+{item.points_rate} pts/visit</Text>
                     </View>
                   </View>
                 </TouchableOpacity>

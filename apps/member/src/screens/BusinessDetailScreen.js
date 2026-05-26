@@ -42,7 +42,6 @@ function PointsCalculator({ pointsRate }) {
       <Text style={styles.calcSub}>How much will you earn?</Text>
       <View style={styles.calcRow}>
         <View style={styles.calcInputWrap}>
-          <Text style={styles.calcCurrency}>JD</Text>
           <TextInput
             style={styles.calcInput}
             value={spend}
@@ -58,7 +57,7 @@ function PointsCalculator({ pointsRate }) {
           <Text style={styles.calcPtsLabel}>pts</Text>
         </View>
       </View>
-      <Text style={styles.calcRate}>Rate: {pointsRate} pts per JD spent</Text>
+      <Text style={styles.calcRate}>Rate: {pointsRate} pts per visit</Text>
     </View>
   );
 }
@@ -305,7 +304,6 @@ const styles = StyleSheet.create({
   calcSub:        { fontSize: 13, color: '#666', marginBottom: 8 },
   calcRow:        { flexDirection: 'row', alignItems: 'center', gap: 12 },
   calcInputWrap:  { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, borderWidth: 1.5, borderColor: '#D0E8D8', gap: 6 },
-  calcCurrency:   { fontSize: 16, fontWeight: '700', color: '#2D6A4F' },
   calcInput:      { flex: 1, fontSize: 20, fontWeight: '700', color: '#1B4332' },
   calcArrow:      { fontSize: 20, color: '#2D6A4F', fontWeight: '700' },
   calcResult:     { flex: 1, alignItems: 'center', backgroundColor: '#1B4332', borderRadius: 12, paddingVertical: 10 },

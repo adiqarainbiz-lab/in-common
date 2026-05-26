@@ -45,7 +45,7 @@ function DetailModal({ item, onClose }) {
               <SheetRow label="Description" value={item.description} />
             )}
             {item.amount_jd != null && item.amount_jd > 0 && (
-              <SheetRow label="Amount"      value={`${item.amount_jd} JD`} />
+              <SheetRow label="Amount"      value={`${item.amount_jd}`} />
             )}
             <SheetRow label="Date" value={date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} />
             <SheetRow label="Time" value={date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} />

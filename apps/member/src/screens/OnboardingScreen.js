@@ -39,7 +39,7 @@ const SLIDES = [
     id: '4',
     emoji: '💚',
     title: 'Redeem as store credit',
-    subtitle: 'Tell the cashier you\'d like to use your points. 10 points = 1 JD off your bill. No bank account needed.',
+    subtitle: 'Tell the cashier you\'d like to use your points as store credit. No bank account needed.',
     bg: ['#40916C', '#52B788'],
     tip: 'Points are valid for 18 months.',
   },
