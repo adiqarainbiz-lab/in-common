@@ -131,7 +131,7 @@ export default function BusinessDetail() {
         </div>
         <div style={{ padding: '14px 20px', display: 'flex', gap: 40, flexWrap: 'wrap' }}>
           <div><div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 2 }}>Category</div>{business.category}</div>
-          <div><div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 2 }}>Points Rate</div>{business.points_rate} pts / JD</div>
+          <div><div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 2 }}>Points Rate</div>{business.points_rate} pts / visit</div>
           <div><div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 2 }}>Address</div>{business.address || '—'}</div>
           <div><div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 2 }}>Active Staff</div>{business.active_staff_count}</div>
         </div>

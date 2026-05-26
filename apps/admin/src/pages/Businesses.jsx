@@ -116,7 +116,7 @@ export default function Businesses() {
                       </button>
                     </td>
                     <td>{b.category}</td>
-                    <td>{b.points_rate} pts / JD</td>
+                    <td>{b.points_rate} pts / visit</td>
                     <td>{b.active_staff_count}</td>
                     <td>
                       <span className={`badge ${b.is_active ? 'badge-active' : 'badge-inactive'}`}>
@@ -242,7 +242,7 @@ export default function Businesses() {
                     <input value={form.logo_url} onChange={e => setForm(f => ({ ...f, logo_url: e.target.value }))} />
                   </div>
                   <div className="form-group">
-                    <label>Points rate (per JD)</label>
+                    <label>Points earn rate (per visit)</label>
                     <input
                       type="number" min="1" value={form.points_rate}
                       onChange={e => setForm(f => ({ ...f, points_rate: e.target.value }))}

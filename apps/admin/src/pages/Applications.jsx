@@ -225,7 +225,7 @@ export default function Applications() {
             This will create the business on the platform. You can edit details (logo, hours, etc.) afterward.
           </p>
           <div style={{ marginBottom: 20 }}>
-            <label style={labelStyle}>Points per JD (earn rate)</label>
+            <label style={labelStyle}>Points earn rate (per visit)</label>
             <input
               type="number"
               min={1}
