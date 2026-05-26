@@ -130,7 +130,7 @@ export default function AuthScreen() {
               </Text>
               <TextInput
                 style={styles.input}
-                placeholder="+972 50 000 0000"
+                placeholder="05x or +972 5x..."
                 value={phone}
                 onChangeText={v => { setPhone(v); setError(''); }}
                 keyboardType="phone-pad"

@@ -5,11 +5,25 @@ const crypto  = require('crypto');
 const db      = require('../config/database');
 const { sendOTP: sendSMS } = require('../services/smsService');
 
+// ─── Phone normalisation ──────────────────────────────────────────────────────
+// Accepts local Israeli format (05x…) and normalises to E.164 (+972…).
+// Examples: 0512345678 → +972512345678 | +972512345678 → +972512345678
+function normalizePhone(raw) {
+  // Strip spaces, dashes, parentheses
+  let p = raw.replace(/[\s\-().]/g, '');
+  if (p.startsWith('00972')) p = '+972' + p.slice(5);
+  else if (p.startsWith('0972'))  p = '+972' + p.slice(4);
+  else if (p.startsWith('972'))   p = '+' + p;
+  else if (p.startsWith('0'))     p = '+972' + p.slice(1);
+  return p;
+}
+
 // ─── Member: request OTP ─────────────────────────────────────────────────────
 router.post('/member/request-otp', async (req, res, next) => {
   try {
-    const { phone_number } = req.body;
-    if (!phone_number) return res.status(400).json({ error: 'phone_number required' });
+    const raw = req.body.phone_number;
+    if (!raw) return res.status(400).json({ error: 'phone_number required' });
+    const phone_number = normalizePhone(raw);
 
     const otp       = String(Math.floor(100000 + Math.random() * 900000));
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
@@ -33,7 +47,8 @@ router.post('/member/request-otp', async (req, res, next) => {
 // ─── Member: verify OTP + register/login ─────────────────────────────────────
 router.post('/member/verify-otp', async (req, res, next) => {
   try {
-    const { phone_number, otp, name, referral_code } = req.body;
+    const { otp, name, referral_code } = req.body;
+    const phone_number = req.body.phone_number ? normalizePhone(req.body.phone_number) : null;
     if (!phone_number || !otp) return res.status(400).json({ error: 'phone_number and otp required' });
 
     const otpRes = await db.query(
