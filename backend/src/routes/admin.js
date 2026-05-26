@@ -5,6 +5,7 @@ const db     = require('../config/database');
 const { authAdmin } = require('../middleware/auth');
 const { reverseTransaction } = require('../services/pointsService');
 const { sendBulkPushNotifications } = require('../services/notificationService');
+const { _clearOffersCache } = require('./businesses');
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
@@ -619,6 +620,7 @@ router.patch('/offer-requests/:id/approve', authAdmin, async (req, res, next) =>
 
     await client.query(`UPDATE offer_requests SET status='approved', reviewed_at=NOW() WHERE id=$1`, [orq.id]);
     await client.query('COMMIT');
+    _clearOffersCache(); // bust the 60s cache so the new offer shows immediately
     res.json({ message: `Offer ${orq.action} approved.` });
   } catch (e) {
     await client.query('ROLLBACK');

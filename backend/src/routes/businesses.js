@@ -4,6 +4,13 @@ const db     = require('../config/database');
 const FIELDS = `id, name, category, address, description, logo_url, cover_url,
                 points_rate, phone, website, instagram, menu_url, hours, discounts`;
 
+// ── In-memory cache for the heavy all-offers JOIN ─────────────────────────────
+const OFFERS_TTL = 60_000; // 60 seconds
+let offersCache = null;
+let offersCacheAt = 0;
+function clearOffersCache() { offersCache = null; offersCacheAt = 0; }
+module.exports._clearOffersCache = clearOffersCache; // exported so admin routes can bust it
+
 // GET /api/businesses
 router.get('/', async (req, res, next) => {
   try {
@@ -23,6 +30,10 @@ router.get('/', async (req, res, next) => {
 // GET /api/businesses/offers — all active offers across all businesses (must be before /:id)
 router.get('/offers', async (req, res, next) => {
   try {
+    const now = Date.now();
+    if (offersCache && now - offersCacheAt < OFFERS_TTL) {
+      return res.json(offersCache);
+    }
     const { rows } = await db.query(
       `SELECT o.id, o.title, o.description, o.image_url, o.valid_from, o.valid_until,
               b.id AS business_id, b.name AS business_name,
@@ -34,6 +45,8 @@ router.get('/offers', async (req, res, next) => {
          AND (o.valid_until IS NULL OR o.valid_until >= CURRENT_DATE)
        ORDER BY o.created_at DESC`,
     );
+    offersCache  = rows;
+    offersCacheAt = now;
     res.json(rows);
   } catch (e) { next(e); }
 });
