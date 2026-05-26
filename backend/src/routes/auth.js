@@ -168,4 +168,37 @@ function sanitizeMember(m) {
   return rest;
 }
 
+// ─── Test agent token (only available when TEST_SECRET env var is set) ────────
+// Allows load-test agents to self-authenticate without going through OTP.
+// Set TEST_SECRET on Render temporarily, remove after testing.
+router.post('/dev/agent-token', async (req, res, next) => {
+  const secret = process.env.TEST_SECRET;
+  if (!secret) return res.status(404).json({ error: 'Not found' });
+  if (req.headers['x-test-secret'] !== secret) return res.status(401).json({ error: 'Unauthorised' });
+
+  try {
+    const { phone_number, name } = req.body;
+    if (!phone_number) return res.status(400).json({ error: 'phone_number required' });
+
+    let member = (await db.query('SELECT * FROM members WHERE phone_number=$1', [phone_number])).rows[0];
+    if (!member) {
+      const qr_secret  = crypto.randomBytes(32).toString('hex');
+      const memberCode = await generateUniqueMemberCode();
+      const result = await db.query(
+        `INSERT INTO members (phone_number, name, qr_secret, member_code)
+         VALUES ($1,$2,$3,$4) RETURNING *`,
+        [phone_number, name || `Agent ${phone_number}`, qr_secret, memberCode],
+      );
+      member = result.rows[0];
+    }
+
+    const token = jwt.sign(
+      { sub: member.id, type: 'member' },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' },
+    );
+    res.json({ token, member: sanitizeMember(member) });
+  } catch (e) { next(e); }
+});
+
 module.exports = router;
