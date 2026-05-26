@@ -10,10 +10,16 @@ const allowedOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
   : ['http://localhost:4000'];
 
+// Expo tunnel / dev domains — always allowed (no sensitive data exposed)
+const EXPO_ORIGIN_RE = /^https?:\/\/([a-z0-9-]+\.)?(tunnel\.expo\.dev|exp\.direct|expo\.dev|localhost)(:\d+)?$/i;
+
 app.use(cors({
   origin: (origin, callback) => {
-    // No origin = mobile app or server-to-server — always allow
+    // No origin = native mobile app or server-to-server — always allow
     if (!origin) return callback(null, true);
+    // Expo Go tunnel / dev client URLs
+    if (EXPO_ORIGIN_RE.test(origin)) return callback(null, true);
+    // Explicitly whitelisted origins
     if (allowedOrigins.includes(origin)) return callback(null, true);
     callback(Object.assign(new Error('CORS: origin not allowed'), { status: 403 }));
   },
