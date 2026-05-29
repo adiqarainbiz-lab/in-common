@@ -41,6 +41,96 @@ app.use('/api/business-portal', require('./routes/businessPortal'));
 
 app.get('/api/health', (_, res) => res.json({ status: 'ok', ts: new Date() }));
 
+app.get('/terms', (_, res) => {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Terms of Service — In Common</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F5F7F5;color:#1B4332}
+    .hero{background:linear-gradient(135deg,#1B4332,#2D6A4F);color:#fff;padding:48px 24px 36px;text-align:center}
+    .hero h1{font-size:28px;font-weight:800;letter-spacing:-0.5px}
+    .hero p{margin-top:8px;opacity:.75;font-size:14px}
+    .body{max-width:680px;margin:0 auto;padding:40px 24px 80px}
+    h2{font-size:17px;font-weight:700;margin:32px 0 10px;color:#1B4332}
+    p,li{font-size:15px;color:#444;line-height:1.7;margin-bottom:8px}
+    ul{padding-left:20px}
+    a{color:#2D6A4F}
+    .updated{font-size:13px;color:#888;margin-top:6px}
+    .contact-box{background:#E8F5E9;border-radius:12px;padding:20px;margin-top:32px}
+    .contact-box p{margin:0;color:#1B4332}
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <h1>🌿 In Common</h1>
+    <p>Terms of Service</p>
+    <p class="updated">Last updated: May 2026</p>
+  </div>
+  <div class="body">
+    <p>Welcome to In Common. By downloading or using the app, you agree to these terms. Please read them carefully.</p>
+
+    <h2>1. The Service</h2>
+    <p>In Common is a community loyalty programme that lets members earn and redeem Common Points at participating partner businesses in Jerusalem. The app is free to use.</p>
+
+    <h2>2. Eligibility</h2>
+    <p>You must be at least 13 years old to use In Common. By creating an account you confirm you meet this requirement.</p>
+
+    <h2>3. Your Account</h2>
+    <ul>
+      <li>You are responsible for keeping your phone number and account secure</li>
+      <li>One account per person — do not create multiple accounts</li>
+      <li>We reserve the right to suspend accounts that violate these terms</li>
+    </ul>
+
+    <h2>4. Common Points</h2>
+    <ul>
+      <li>Points are earned when a partner business staff member scans your QR code</li>
+      <li>Points have no cash value and cannot be transferred, sold, or exchanged for cash</li>
+      <li>Points expire after 18 months of account inactivity</li>
+      <li>We reserve the right to adjust points earn rates, redemption rates, and tier thresholds with notice</li>
+      <li>Points may be forfeited if an account is found to be fraudulent or in violation of these terms</li>
+    </ul>
+
+    <h2>5. Referrals</h2>
+    <p>You may earn bonus points by referring friends. Referral points are awarded when a new member signs up using your code and completes their first visit. Abuse of the referral programme (e.g. fake accounts) will result in forfeiture of all referral points and account suspension.</p>
+
+    <h2>6. Partner Businesses</h2>
+    <p>Partner businesses are independent entities. In Common is not responsible for the products, services, or conduct of partner businesses. Disputes with a business should be resolved directly with that business.</p>
+
+    <h2>7. Prohibited Use</h2>
+    <ul>
+      <li>Do not attempt to manipulate, hack, or exploit the points system</li>
+      <li>Do not create fake accounts or use automated tools to earn points</li>
+      <li>Do not share or sell your QR code to others</li>
+    </ul>
+
+    <h2>8. Termination</h2>
+    <p>You may delete your account at any time by contacting us. We may suspend or terminate your account if you violate these terms, with forfeiture of any accumulated points.</p>
+
+    <h2>9. Disclaimers</h2>
+    <p>In Common is provided "as is". We do not guarantee uninterrupted service and are not liable for any losses arising from use of the app, including loss of points due to technical issues.</p>
+
+    <h2>10. Changes</h2>
+    <p>We may update these terms from time to time. Continued use of the app after changes constitutes acceptance of the new terms.</p>
+
+    <h2>11. Governing Law</h2>
+    <p>These terms are governed by applicable law. Any disputes shall be resolved in good faith.</p>
+
+    <div class="contact-box">
+      <p>📬 <strong>Questions?</strong><br/>
+      <a href="mailto:adiqarain.biz@gmail.com">adiqarain.biz@gmail.com</a><br/><br/>
+      <a href="/privacy">Privacy Policy</a></p>
+    </div>
+  </div>
+</body>
+</html>`);
+});
+
 app.get('/privacy', (_, res) => {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(`<!DOCTYPE html>
