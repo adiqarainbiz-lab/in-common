@@ -2,7 +2,8 @@ const router = require('express').Router();
 const db     = require('../config/database');
 
 const FIELDS = `id, name, category, address, description, logo_url, cover_url,
-                points_rate, phone, website, instagram, menu_url, hours, discounts`;
+                points_rate, phone, website, instagram, menu_url, hours, discounts,
+                lat, lng`;
 
 // ── In-memory cache for the heavy all-offers JOIN ─────────────────────────────
 // Uses promise coalescing: if 100 requests arrive simultaneously on a cold cache,

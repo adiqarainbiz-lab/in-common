@@ -1,12 +1,12 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import QRCard from '../components/QRCard';
 import TierBadge from '../components/TierBadge';
 import { useAuth } from '../context/AuthContext';
 import { Text } from 'react-native';
 
-export default function QRScreen() {
+export default function QRScreen({ navigation }) {
   const { profile } = useAuth();
   if (!profile) return null;
 
@@ -32,6 +32,20 @@ export default function QRScreen() {
             <Text style={styles.codeValue}>{profile.member_code}</Text>
             <Text style={styles.codeHint}>Give this to staff if the QR won't scan</Text>
           </View>
+        )}
+
+        {/* Redeem CTA */}
+        {profile.points_balance > 0 && (
+          <TouchableOpacity style={styles.redeemBtn} onPress={() => navigation.navigate('Redeem')}>
+            <View style={styles.redeemLeft}>
+              <Text style={styles.redeemEmoji}>💚</Text>
+              <View>
+                <Text style={styles.redeemTitle}>Redeem Points</Text>
+                <Text style={styles.redeemSub}>{profile.points_balance.toLocaleString()} pts available</Text>
+              </View>
+            </View>
+            <Text style={styles.redeemArrow}>→</Text>
+          </TouchableOpacity>
         )}
 
         <View style={styles.infoCard}>
@@ -75,4 +89,11 @@ const styles = StyleSheet.create({
   codeLabel: { fontSize: 12, color: '#888', textTransform: 'uppercase', letterSpacing: 1.5 },
   codeValue: { fontSize: 38, fontWeight: '800', color: '#1B4332', letterSpacing: 8 },
   codeHint:  { fontSize: 12, color: '#AAA', textAlign: 'center' },
+
+  redeemBtn:   { backgroundColor: '#1B4332', borderRadius: 20, padding: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  redeemLeft:  { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  redeemEmoji: { fontSize: 28 },
+  redeemTitle: { fontSize: 16, fontWeight: '800', color: '#fff' },
+  redeemSub:   { fontSize: 13, color: 'rgba(255,255,255,0.65)', marginTop: 2 },
+  redeemArrow: { fontSize: 20, color: 'rgba(255,255,255,0.7)', fontWeight: '700' },
 });

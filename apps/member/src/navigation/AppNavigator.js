@@ -14,6 +14,7 @@ import HistoryScreen     from '../screens/HistoryScreen';
 import ProfileScreen     from '../screens/ProfileScreen';
 import EditProfileScreen      from '../screens/EditProfileScreen';
 import BusinessDetailScreen  from '../screens/BusinessDetailScreen';
+import RedeemScreen          from '../screens/RedeemScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab   = createBottomTabNavigator();
@@ -79,6 +80,7 @@ export default function AppNavigator() {
             <Stack.Screen name="EditProfile"    component={EditProfileScreen} />
             <Stack.Screen name="Businesses"     component={BusinessesScreen} />
             <Stack.Screen name="BusinessDetail" component={BusinessDetailScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Redeem"         component={RedeemScreen} options={{ headerShown: false }} />
           </>
         ) : isGuest ? (
           <>
