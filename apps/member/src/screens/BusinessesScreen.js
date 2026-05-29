@@ -108,6 +108,11 @@ export default function BusinessesScreen({ navigation }) {
     <SafeAreaView style={styles.safe}>
       {/* Header */}
       <View style={styles.header}>
+        {navigation.canGoBack() && (
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+            <Text style={styles.backText}>← Back</Text>
+          </TouchableOpacity>
+        )}
         <View style={styles.titleRow}>
           <View>
             <Text style={styles.title}>Partner Businesses</Text>
@@ -245,7 +250,9 @@ export default function BusinessesScreen({ navigation }) {
 const styles = StyleSheet.create({
   safe:    { flex: 1, backgroundColor: '#F5F7F5' },
 
-  header:  { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
+  header:  { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8, gap: 8 },
+  backBtn: { alignSelf: 'flex-start' },
+  backText:{ color: '#2D6A4F', fontSize: 15, fontWeight: '600' },
   titleRow:{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
   title:   { fontSize: 26, fontWeight: '800', color: '#1B4332', letterSpacing: -0.5 },
   subtitle:{ fontSize: 14, color: '#6B7C6B', marginTop: 2 },
