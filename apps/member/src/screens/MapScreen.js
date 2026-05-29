@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View, Text, StyleSheet, TouchableOpacity,
   ActivityIndicator, RefreshControl, ScrollView,
@@ -35,6 +36,9 @@ export default function MapScreen({ navigation }) {
   };
 
   useEffect(() => { load(); }, []);
+
+  // Refresh whenever the tab comes into focus
+  useFocusEffect(useCallback(() => { load(true); }, []));
 
   const recenter = () => {
     mapRef.current?.animateToRegion(JERUSALEM, 600);
