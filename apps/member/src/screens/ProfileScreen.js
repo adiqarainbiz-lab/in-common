@@ -127,6 +127,9 @@ export default function ProfileScreen({ navigation }) {
           <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('EditProfile')}>
             <Text style={styles.actionBtnText}>✏️  Edit Profile</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('History')}>
+            <Text style={styles.actionBtnText}>📜  Transaction History</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={[styles.actionBtn, styles.actionBtnDanger]} onPress={confirmLogout}>
             <Text style={[styles.actionBtnText, styles.actionBtnTextDanger]}>Sign out</Text>
           </TouchableOpacity>

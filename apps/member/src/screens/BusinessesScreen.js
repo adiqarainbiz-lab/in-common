@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   ActivityIndicator, RefreshControl, Image, TextInput,
 } from 'react-native';
-import MapView, { Marker, Callout } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { member as memberApi, pub as pubApi } from '../services/api';
@@ -27,9 +26,6 @@ const CATEGORIES = [
 
 const CATEGORY_LABEL = { food: 'Food & Drink', services: 'Services', shop: 'Shop' };
 const CATEGORY_EMOJI = { food: '🍽️', services: '✂️', shop: '🛍️' };
-
-// Jerusalem city centre
-const JERUSALEM = { latitude: 31.7767, longitude: 35.2345, latitudeDelta: 0.06, longitudeDelta: 0.06 };
 
 function BusinessCard({ item, onPress, isFav, onToggleFav }) {
   const [imgError, setImgError] = useState(false);
@@ -72,8 +68,6 @@ export default function BusinessesScreen({ navigation }) {
   const [refreshing,  setRefreshing] = useState(false);
   const [favIds,      setFavIds]     = useState([]);
   const [query,       setQuery]      = useState('');
-  const [viewMode,    setViewMode]   = useState('list'); // 'list' | 'map'
-  const mapRef = useRef(null);
 
   useEffect(() => { loadFavIds().then(setFavIds); }, []);
 
@@ -102,7 +96,6 @@ export default function BusinessesScreen({ navigation }) {
     : businesses;
 
   const favBusinesses = filtered.filter(b => favIds.includes(b.id));
-  const mappable = filtered.filter(b => b.lat && b.lng);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -117,21 +110,6 @@ export default function BusinessesScreen({ navigation }) {
           <View>
             <Text style={styles.title}>Partner Businesses</Text>
             <Text style={styles.subtitle}>Earn points at every visit</Text>
-          </View>
-          {/* List / Map toggle */}
-          <View style={styles.toggle}>
-            <TouchableOpacity
-              style={[styles.toggleBtn, viewMode === 'list' && styles.toggleBtnActive]}
-              onPress={() => setViewMode('list')}
-            >
-              <Text style={[styles.toggleText, viewMode === 'list' && styles.toggleTextActive]}>☰</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.toggleBtn, viewMode === 'map' && styles.toggleBtnActive]}
-              onPress={() => setViewMode('map')}
-            >
-              <Text style={[styles.toggleText, viewMode === 'map' && styles.toggleTextActive]}>🗺</Text>
-            </TouchableOpacity>
           </View>
         </View>
 
@@ -155,58 +133,23 @@ export default function BusinessesScreen({ navigation }) {
         </View>
       </View>
 
-      {/* Category tabs — only in list mode */}
-      {viewMode === 'list' && (
-        <View style={styles.tabs}>
-          {CATEGORIES.map((c) => (
-            <TouchableOpacity
-              key={String(c.key)}
-              style={[styles.tab, category === c.key && styles.tabActive]}
-              onPress={() => setCategory(c.key)}
-            >
-              <Text style={styles.tabEmoji}>{c.emoji}</Text>
-              <Text style={[styles.tabLabel, category === c.key && styles.tabLabelActive]}>{c.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
+      {/* Category tabs */}
+      <View style={styles.tabs}>
+        {CATEGORIES.map((c) => (
+          <TouchableOpacity
+            key={String(c.key)}
+            style={[styles.tab, category === c.key && styles.tabActive]}
+            onPress={() => setCategory(c.key)}
+          >
+            <Text style={styles.tabEmoji}>{c.emoji}</Text>
+            <Text style={[styles.tabLabel, category === c.key && styles.tabLabelActive]}>{c.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
       {loading ? (
         <ActivityIndicator style={{ flex: 1 }} color="#2D6A4F" size="large" />
-      ) : viewMode === 'map' ? (
-        /* ── Map view ── */
-        <View style={{ flex: 1 }}>
-          <MapView
-            ref={mapRef}
-            style={{ flex: 1 }}
-            initialRegion={JERUSALEM}
-            showsUserLocation
-            showsMyLocationButton
-          >
-            {mappable.map(biz => (
-              <Marker
-                key={biz.id}
-                coordinate={{ latitude: parseFloat(biz.lat), longitude: parseFloat(biz.lng) }}
-                pinColor="#2D6A4F"
-              >
-                <Callout onPress={() => navigation.navigate('BusinessDetail', { businessId: biz.id })}>
-                  <View style={styles.callout}>
-                    <Text style={styles.calloutName}>{biz.name}</Text>
-                    <Text style={styles.calloutCat}>{CATEGORY_LABEL[biz.category] || biz.category}</Text>
-                    <Text style={styles.calloutPts}>+{biz.points_rate} pts · Tap to open →</Text>
-                  </View>
-                </Callout>
-              </Marker>
-            ))}
-          </MapView>
-          {mappable.length === 0 && (
-            <View style={styles.noCoords}>
-              <Text style={styles.noCoordsText}>📍 No businesses with location data yet</Text>
-            </View>
-          )}
-        </View>
       ) : (
-        /* ── List view ── */
         <FlatList
           data={filtered}
           keyExtractor={i => i.id}
@@ -257,12 +200,6 @@ const styles = StyleSheet.create({
   title:   { fontSize: 26, fontWeight: '800', color: '#1B4332', letterSpacing: -0.5 },
   subtitle:{ fontSize: 14, color: '#6B7C6B', marginTop: 2 },
 
-  toggle:        { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 12, padding: 3, gap: 3, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 4, elevation: 2 },
-  toggleBtn:     { width: 36, height: 36, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
-  toggleBtnActive:{ backgroundColor: '#2D6A4F' },
-  toggleText:    { fontSize: 18 },
-  toggleTextActive:{ color: '#fff' },
-
   searchWrap:  { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10, gap: 8, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 },
   searchIcon:  { fontSize: 16 },
   searchInput: { flex: 1, fontSize: 15, color: '#1B4332' },
@@ -300,13 +237,4 @@ const styles = StyleSheet.create({
   favsAllTitle:     { fontSize: 16, fontWeight: '800', color: '#1B4332', marginTop: 8 },
 
   empty: { textAlign: 'center', color: '#AAA', marginTop: 60, fontSize: 15 },
-
-  // Map callout
-  callout:     { width: 200, padding: 8, gap: 3 },
-  calloutName: { fontSize: 14, fontWeight: '800', color: '#1B4332' },
-  calloutCat:  { fontSize: 12, color: '#666' },
-  calloutPts:  { fontSize: 12, color: '#2D6A4F', fontWeight: '600', marginTop: 3 },
-
-  noCoords: { position: 'absolute', bottom: 24, left: 0, right: 0, alignItems: 'center' },
-  noCoordsText: { backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 99, fontSize: 13 },
 });
