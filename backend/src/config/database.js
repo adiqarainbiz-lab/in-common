@@ -1,6 +1,12 @@
 const { Pool } = require('pg');
 
-const poolConfig = process.env.DATABASE_URL
+const poolConfig = process.env.DATABASE_PRIVATE_URL
+  ? {
+      connectionString: process.env.DATABASE_PRIVATE_URL,
+      max: 10,
+      idleTimeoutMillis: 30000,
+    }
+  : process.env.DATABASE_URL
   ? {
       connectionString: process.env.DATABASE_URL,
       ssl: { rejectUnauthorized: false },
