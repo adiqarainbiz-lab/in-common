@@ -125,7 +125,7 @@ export default function HomeScreen({ navigation }) {
               <Text style={styles.pointsSubtextCta}>Visit a partner business to start earning →</Text>
             </TouchableOpacity>
           ) : (
-            <Text style={styles.pointsSubtext}>Redeem in-store · 10 pts = 1 JD</Text>
+            <Text style={styles.pointsSubtext}>Redeem in-store at any partner business</Text>
           )}
           {next && (
             <View style={styles.progressSection}>
