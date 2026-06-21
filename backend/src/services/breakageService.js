@@ -1,6 +1,6 @@
 const cron = require('node-cron');
 const db   = require('../config/database');
-const { sendPushNotification } = require('./notificationService');
+const { sendPushNotification, storeNotification } = require('./notificationService');
 
 const INACTIVITY_MONTHS = 18;
 
@@ -42,14 +42,10 @@ async function expireInactivePoints() {
 
   // Notify affected members after committing
   for (const member of staleRes.rows) {
-    if (member.push_token) {
-      sendPushNotification(
-        member.push_token,
-        'Your points have expired',
-        `${member.points_balance} Common Points expired after 18 months of inactivity. Visit a partner business to start earning again.`,
-        { type: 'points_expired' },
-      );
-    }
+    const title = 'Your points have expired';
+    const body = `${member.points_balance} Common Points expired after 18 months of inactivity. Visit a partner business to start earning again.`;
+    if (member.push_token) sendPushNotification(member.push_token, title, body, { type: 'points_expired' });
+    storeNotification(member.id, title, body, 'points_expired');
   }
 }
 
@@ -65,12 +61,10 @@ async function warnExpiringPoints() {
   );
 
   for (const member of res.rows) {
-    sendPushNotification(
-      member.push_token,
-      'Your points expire in 30 days',
-      `You have ${member.points_balance} Common Points that will expire due to inactivity. Visit any partner business to keep them.`,
-      { type: 'points_expiring_soon' },
-    );
+    const title = 'Your points expire in 30 days';
+    const body = `You have ${member.points_balance} Common Points that will expire due to inactivity. Visit any partner business to keep them.`;
+    sendPushNotification(member.push_token, title, body, { type: 'points_expiring_soon' });
+    storeNotification(member.id, title, body, 'points_expiring_soon');
   }
 
   if (res.rows.length) {

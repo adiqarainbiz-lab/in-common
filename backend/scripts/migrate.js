@@ -16,7 +16,7 @@ async function waitForDb(retries = 10, delayMs = 3000) {
   for (let i = 1; i <= retries; i++) {
     try {
       await pool.query('SELECT 1');
-      return; // connected
+      return;
     } catch (e) {
       if (i === retries) throw e;
       console.log(`DB not ready (attempt ${i}/${retries}), retrying in ${delayMs / 1000}s… [${e.message}]`);
@@ -37,7 +37,14 @@ async function run() {
     )
   `);
 
-  const files = ['001_initial.sql', '002_seed.sql', '003_admin.sql', '004_reversal.sql', '005_push_tokens.sql', '006_business_covers.sql', '007_jerusalem_businesses.sql', '008_business_details.sql', '009_admin_tools.sql', '010_business_applications.sql', '011_offers.sql', '012_referrals.sql', '013_coordinates.sql', '014_more_coordinates.sql'];
+  const files = [
+    '001_initial.sql', '002_seed.sql', '003_admin.sql', '004_reversal.sql',
+    '005_push_tokens.sql', '006_business_covers.sql', '007_jerusalem_businesses.sql',
+    '008_business_details.sql', '009_admin_tools.sql', '010_business_applications.sql',
+    '011_offers.sql', '012_referrals.sql', '013_coordinates.sql', '014_more_coordinates.sql',
+    '015_notifications.sql',
+  ];
+
   for (const file of files) {
     const { rows } = await pool.query('SELECT 1 FROM _migrations WHERE filename=$1', [file]);
     if (rows.length) {

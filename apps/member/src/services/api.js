@@ -12,20 +12,22 @@ api.interceptors.request.use(async (config) => {
 });
 
 export const auth = {
-  requestOTP: (phone_number)                      => api.post('/auth/member/request-otp', { phone_number }),
+  requestOTP: (phone_number)                           => api.post('/auth/member/request-otp', { phone_number }),
   verifyOTP:  (phone_number, otp, name, referral_code) => api.post('/auth/member/verify-otp', { phone_number, otp, name, referral_code }),
 };
 
 export const member = {
-  profile:       ()                     => api.get('/member/profile'),
-  updateProfile: (name, phone_number)   => api.patch('/member/profile', { name, phone_number }),
-  savePushToken: (token)                => api.patch('/member/push-token', { token }),
-  qrToken:       ()                     => api.get('/member/qr-token'),
-  transactions:  (page = 1)            => api.get(`/member/transactions?page=${page}`),
-  businesses:    (category)            => api.get(`/member/businesses${category ? `?category=${category}` : ''}`),
-  referral:      ()                     => api.get('/member/referral'),
-  achievements:  ()                     => api.get('/member/achievements'),
-  recommended:   ()                     => api.get('/member/recommended'),
+  profile:       ()                   => api.get('/member/profile'),
+  updateProfile: (name, phone_number) => api.patch('/member/profile', { name, phone_number }),
+  savePushToken: (token)              => api.patch('/member/push-token', { token }),
+  qrToken:       ()                   => api.get('/member/qr-token'),
+  transactions:  (page = 1)          => api.get(`/member/transactions?page=${page}`),
+  businesses:    (category)          => api.get(`/member/businesses${category ? `?category=${category}` : ''}`),
+  referral:      ()                   => api.get('/member/referral'),
+  achievements:  ()                   => api.get('/member/achievements'),
+  recommended:   ()                   => api.get('/member/recommended'),
+  notifications: (page = 1)          => api.get(`/member/notifications?page=${page}`),
+  markAllRead:   ()                   => api.patch('/member/notifications/read-all'),
 };
 
 export const pub = {

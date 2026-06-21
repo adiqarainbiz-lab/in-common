@@ -143,10 +143,9 @@ router.get('/achievements', async (req, res, next) => {
       [req.member.sub],
     );
 
-    const visits   = parseInt(stats.total_visits);
-    const pts      = parseInt(stats.lifetime_pts);
-    const refs     = parseInt(stats.referral_count);
-    const tier     = stats.tier;
+    const visits = parseInt(stats.total_visits);
+    const refs   = parseInt(stats.referral_count);
+    const tier   = stats.tier;
 
     const all = [
       { id: 'first_visit',   emoji: '⭐', title: 'First Visit',        desc: 'Made your first earn',          unlocked: visits >= 1  },
@@ -205,6 +204,41 @@ router.get('/referral', async (req, res, next) => {
       referral_code: memberRes.rows[0].member_code,
       friends_count: parseInt(countRes.rows[0].count),
     });
+  } catch (e) { next(e); }
+});
+
+// GET /api/member/notifications?page=1
+router.get('/notifications', async (req, res, next) => {
+  try {
+    const page   = parseInt(req.query.page || '1');
+    const limit  = 20;
+    const offset = (page - 1) * limit;
+
+    const [notifRes, countRes, unreadRes] = await Promise.all([
+      db.query(
+        `SELECT id, title, body, type, is_read, created_at
+         FROM member_notifications WHERE member_id=$1
+         ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
+        [req.member.sub, limit, offset],
+      ),
+      db.query('SELECT COUNT(*) FROM member_notifications WHERE member_id=$1', [req.member.sub]),
+      db.query('SELECT COUNT(*) FROM member_notifications WHERE member_id=$1 AND is_read=FALSE', [req.member.sub]),
+    ]);
+
+    res.json({
+      notifications: notifRes.rows,
+      total:         parseInt(countRes.rows[0].count),
+      unread_count:  parseInt(unreadRes.rows[0].count),
+      page,
+    });
+  } catch (e) { next(e); }
+});
+
+// PATCH /api/member/notifications/read-all
+router.patch('/notifications/read-all', async (req, res, next) => {
+  try {
+    await db.query('UPDATE member_notifications SET is_read=TRUE WHERE member_id=$1', [req.member.sub]);
+    res.json({ ok: true });
   } catch (e) { next(e); }
 });
 

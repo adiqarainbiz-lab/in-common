@@ -69,18 +69,15 @@ export default function OnboardingScreen() {
   const renderSlide = ({ item }) => (
     <View style={[styles.slide, { width }]}>
       <LinearGradient colors={item.bg} style={styles.slideGradient}>
-        {/* Skip button */}
         <TouchableOpacity style={styles.skipBtn} onPress={skip}>
           <Text style={styles.skipText}>Skip</Text>
         </TouchableOpacity>
 
-        {/* Main content */}
         <View style={styles.content}>
           <Text style={styles.emoji}>{item.emoji}</Text>
           <Text style={styles.title}>{item.title}</Text>
           <Text style={styles.subtitle}>{item.subtitle}</Text>
 
-          {/* Tier ladder — slide 3 only */}
           {item.tiers && (
             <View style={styles.tierCard}>
               {item.tiers.map((t, i) => (
@@ -93,7 +90,6 @@ export default function OnboardingScreen() {
             </View>
           )}
 
-          {/* Tip pill */}
           {item.tip && (
             <View style={styles.tipPill}>
               <Text style={styles.tipText}>💡 {item.tip}</Text>
@@ -125,22 +121,16 @@ export default function OnboardingScreen() {
         scrollEventThrottle={16}
       />
 
-      {/* Bottom bar */}
       <View style={styles.bottomBar}>
-        {/* Dots */}
         <View style={styles.dots}>
           {SLIDES.map((_, i) => (
             <View
               key={i}
-              style={[
-                styles.dot,
-                i === activeIndex ? styles.dotActive : styles.dotInactive,
-              ]}
+              style={[styles.dot, i === activeIndex ? styles.dotActive : styles.dotInactive]}
             />
           ))}
         </View>
 
-        {/* CTA button */}
         <TouchableOpacity style={[styles.btn, isLast && styles.btnLast]} onPress={goNext}>
           <Text style={[styles.btnText, isLast && styles.btnTextLast]}>
             {isLast ? '🌿  Get Started' : 'Next →'}
@@ -164,7 +154,6 @@ const styles = StyleSheet.create({
   title:         { fontSize: 28, fontWeight: '800', color: '#FFFFFF', textAlign: 'center', marginBottom: 16, lineHeight: 34 },
   subtitle:      { fontSize: 16, color: '#FFFFFFCC', textAlign: 'center', lineHeight: 24 },
 
-  // Tiers
   tierCard:      { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 16, padding: 8, marginTop: 28, width: '100%' },
   tierRow:       { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 12 },
   tierRowBorder: { borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.15)' },
@@ -172,11 +161,9 @@ const styles = StyleSheet.create({
   tierName:      { flex: 1, fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
   tierPts:       { fontSize: 13, color: '#FFFFFFAA', fontWeight: '600' },
 
-  // Tip
   tipPill:       { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, marginTop: 24 },
   tipText:       { fontSize: 13, color: '#FFFFFFCC', textAlign: 'center' },
 
-  // Bottom
   bottomBar:     {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     paddingBottom: Platform.OS === 'ios' ? 40 : 24,

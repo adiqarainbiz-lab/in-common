@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Image, FlatList, Dimensions, Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
 import TierBadge from '../components/TierBadge';
@@ -59,12 +60,21 @@ export default function HomeScreen({ navigation }) {
   const [businesses,    setBusinesses]    = useState([]);
   const [referralStats, setReferralStats] = useState(null);
   const [recommended,   setRecommended]   = useState([]);
+  const [unreadCount,   setUnreadCount]   = useState(0);
 
   useEffect(() => {
     pub.businesses().then(r => setBusinesses(r.data)).catch(() => {});
     memberApi.referral().then(r => setReferralStats(r.data)).catch(() => {});
     memberApi.recommended().then(r => setRecommended(r.data)).catch(() => {});
   }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      memberApi.notifications(1)
+        .then((res) => setUnreadCount(res.data.unread_count))
+        .catch(() => {});
+    }, []),
+  );
 
   async function handleShare() {
     if (!referralStats?.referral_code) return;
@@ -89,9 +99,19 @@ export default function HomeScreen({ navigation }) {
         <LinearGradient colors={['#1B4332', '#2D6A4F']} style={styles.header}>
           <View style={styles.headerTop}>
             <Text style={styles.greeting}>مرحبا، {profile.name}</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('EditProfile')}>
-              <Text style={styles.editText}>✏️</Text>
-            </TouchableOpacity>
+            <View style={styles.headerActions}>
+              <TouchableOpacity onPress={() => navigation.navigate('Notifications')} style={styles.bellBtn}>
+                <Text style={styles.bellIcon}>🔔</Text>
+                {unreadCount > 0 && (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => navigation.navigate('EditProfile')}>
+                <Text style={styles.editText}>✏️</Text>
+              </TouchableOpacity>
+            </View>
           </View>
           <TierBadge tier={profile.tier} size="lg" />
         </LinearGradient>
@@ -105,7 +125,7 @@ export default function HomeScreen({ navigation }) {
               <Text style={styles.pointsSubtextCta}>Visit a partner business to start earning →</Text>
             </TouchableOpacity>
           ) : (
-            <Text style={styles.pointsSubtext}>pts — redeem as in-store credit</Text>
+            <Text style={styles.pointsSubtext}>Redeem in-store · 10 pts = 1 JD</Text>
           )}
           {next && (
             <View style={styles.progressSection}>
@@ -299,6 +319,11 @@ const styles = StyleSheet.create({
   header:            { padding: 24, paddingTop: 32, gap: 16 },
   headerTop:         { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   greeting:          { color: 'white', fontSize: 20, fontWeight: '700' },
+  headerActions:     { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  bellBtn:           { position: 'relative' },
+  bellIcon:          { fontSize: 20 },
+  badge:             { position: 'absolute', top: -4, right: -6, backgroundColor: '#C62828', borderRadius: 8, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 },
+  badgeText:         { color: 'white', fontSize: 9, fontWeight: '800' },
   editText:          { color: '#FFFFFFCC', fontSize: 18 },
 
   // Points card

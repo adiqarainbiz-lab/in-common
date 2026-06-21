@@ -1,5 +1,5 @@
 const db = require('../config/database');
-const { sendPushNotification } = require('./notificationService');
+const { sendPushNotification, storeNotification } = require('./notificationService');
 
 const TIERS = [
   { name: 'Seedling', min: 0    },
@@ -59,14 +59,12 @@ async function earnPoints(memberId, businessId, staffId, points, description) {
     await client.query('COMMIT');
 
     const newTier = updated.rows[0].tier;
-    if (newTier !== oldTier && pushToken) {
+    if (newTier !== oldTier) {
       const emoji = TIER_EMOJI[newTier] || '🎉';
-      sendPushNotification(
-        pushToken,
-        `${emoji} You've reached ${newTier}!`,
-        `Congratulations — keep earning at partner businesses to climb higher.`,
-        { type: 'tier_upgrade', tier: newTier },
-      );
+      const title = `${emoji} You've reached ${newTier}!`;
+      const body = `Congratulations — keep earning at partner businesses to climb higher.`;
+      if (pushToken) sendPushNotification(pushToken, title, body, { type: 'tier_upgrade', tier: newTier });
+      storeNotification(memberId, title, body, 'tier_upgrade');
     }
 
     return { points, newBalance: updated.rows[0].points_balance, tier: newTier };

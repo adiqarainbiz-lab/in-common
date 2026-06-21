@@ -4,18 +4,19 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuth } from '../context/AuthContext';
-import AuthScreen         from '../screens/AuthScreen';
-import OnboardingScreen  from '../screens/OnboardingScreen';
-import HomeScreen        from '../screens/HomeScreen';
-import QRScreen          from '../screens/QRScreen';
-import DealsScreen       from '../screens/DealsScreen';
-import BusinessesScreen  from '../screens/BusinessesScreen';
-import HistoryScreen     from '../screens/HistoryScreen';
-import MapScreen         from '../screens/MapScreen';
-import ProfileScreen     from '../screens/ProfileScreen';
-import EditProfileScreen      from '../screens/EditProfileScreen';
-import BusinessDetailScreen  from '../screens/BusinessDetailScreen';
-import RedeemScreen          from '../screens/RedeemScreen';
+import AuthScreen           from '../screens/AuthScreen';
+import OnboardingScreen     from '../screens/OnboardingScreen';
+import HomeScreen           from '../screens/HomeScreen';
+import QRScreen             from '../screens/QRScreen';
+import DealsScreen          from '../screens/DealsScreen';
+import BusinessesScreen     from '../screens/BusinessesScreen';
+import HistoryScreen        from '../screens/HistoryScreen';
+import MapScreen            from '../screens/MapScreen';
+import ProfileScreen        from '../screens/ProfileScreen';
+import EditProfileScreen    from '../screens/EditProfileScreen';
+import BusinessDetailScreen from '../screens/BusinessDetailScreen';
+import RedeemScreen         from '../screens/RedeemScreen';
+import NotificationsScreen  from '../screens/NotificationsScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab   = createBottomTabNavigator();
@@ -24,7 +25,6 @@ function Tabs() {
   const { postOnboardingTab, clearPostOnboardingTab } = useAuth();
   const initialTab = postOnboardingTab || 'Home';
 
-  // Clear the flag after the navigator mounts so back-navigation works normally
   React.useEffect(() => {
     if (postOnboardingTab) clearPostOnboardingTab();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -83,6 +83,7 @@ export default function AppNavigator() {
             <Stack.Screen name="History"        component={HistoryScreen} options={{ headerShown: false }} />
             <Stack.Screen name="BusinessDetail" component={BusinessDetailScreen} options={{ headerShown: false }} />
             <Stack.Screen name="Redeem"         component={RedeemScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Notifications"  component={NotificationsScreen} />
           </>
         ) : isGuest ? (
           <>

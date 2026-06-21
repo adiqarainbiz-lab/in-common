@@ -1,4 +1,5 @@
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
+const db = require('../config/database');
 
 async function sendPushNotification(pushToken, title, body, data = {}) {
   if (!pushToken || !pushToken.startsWith('ExponentPushToken[')) return;
@@ -26,7 +27,6 @@ async function sendBulkPushNotifications(tokens, title, body, data = {}) {
 
   let sent = 0, failed = 0;
 
-  // Chunk into batches of 100
   for (let i = 0; i < valid.length; i += 100) {
     const batch = valid.slice(i, i + 100).map(to => ({
       to, sound: 'default', title, body, data,
@@ -42,7 +42,6 @@ async function sendBulkPushNotifications(tokens, title, body, data = {}) {
       for (const r of results) {
         r.status === 'ok' ? sent++ : failed++;
       }
-      // If Expo returned fewer results than we sent, count remainder as sent
       if (results.length < batch.length) sent += batch.length - results.length;
     } catch (e) {
       console.warn('[push] Batch failed:', e.message);
@@ -53,4 +52,15 @@ async function sendBulkPushNotifications(tokens, title, body, data = {}) {
   return { sent, failed, no_token };
 }
 
-module.exports = { sendPushNotification, sendBulkPushNotifications };
+async function storeNotification(memberId, title, body, type = 'general') {
+  try {
+    await db.query(
+      `INSERT INTO member_notifications (member_id, title, body, type) VALUES ($1,$2,$3,$4)`,
+      [memberId, title, body, type],
+    );
+  } catch (e) {
+    console.warn('[push] Failed to store notification:', e.message);
+  }
+}
+
+module.exports = { sendPushNotification, sendBulkPushNotifications, storeNotification };
