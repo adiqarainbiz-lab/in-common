@@ -47,7 +47,7 @@ router.post('/member/request-otp', async (req, res, next) => {
 // ─── Member: verify OTP + register/login ─────────────────────────────────────
 router.post('/member/verify-otp', async (req, res, next) => {
   try {
-    const { otp, name, referral_code } = req.body;
+    const { otp, name, referral_code, marketing_consent } = req.body;
     const phone_number = req.body.phone_number ? normalizePhone(req.body.phone_number) : null;
     if (!phone_number || !otp) return res.status(400).json({ error: 'phone_number and otp required' });
 
@@ -68,8 +68,9 @@ router.post('/member/verify-otp', async (req, res, next) => {
       const secret = crypto.randomBytes(32).toString('hex');
       const memberCode = await generateUniqueMemberCode();
       const result = await db.query(
-        `INSERT INTO members (phone_number, name, qr_secret, member_code) VALUES ($1,$2,$3,$4) RETURNING *`,
-        [phone_number, name, secret, memberCode],
+        `INSERT INTO members (phone_number, name, qr_secret, member_code, consent_given_at, marketing_consent)
+         VALUES ($1,$2,$3,$4,NOW(),$5) RETURNING *`,
+        [phone_number, name, secret, memberCode, marketing_consent === true],
       );
       member = result.rows[0];
       is_new = true;

@@ -13,7 +13,7 @@ api.interceptors.request.use(async (config) => {
 
 export const auth = {
   requestOTP: (phone_number)                           => api.post('/auth/member/request-otp', { phone_number }),
-  verifyOTP:  (phone_number, otp, name, referral_code) => api.post('/auth/member/verify-otp', { phone_number, otp, name, referral_code }),
+  verifyOTP:  (phone_number, otp, name, referral_code, marketing_consent) => api.post('/auth/member/verify-otp', { phone_number, otp, name, referral_code, marketing_consent }),
 };
 
 export const member = {

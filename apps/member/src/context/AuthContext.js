@@ -46,8 +46,8 @@ export function AuthProvider({ children }) {
     return res.data;
   };
 
-  const login = async (phone, otp, name, referralCode) => {
-    const res = await authApi.verifyOTP(phone, otp, name, referralCode);
+  const login = async (phone, otp, name, referralCode, marketingConsent) => {
+    const res = await authApi.verifyOTP(phone, otp, name, referralCode, marketingConsent);
     const { token: t, member: m, is_new } = res.data;
     await AsyncStorage.setItem('member_token', t);
     setToken(t);

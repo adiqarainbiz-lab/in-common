@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity,
+  View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
 
-const STEPS = { PHONE: 'phone', OTP: 'otp', NAME: 'name' };
+const STEPS = { PHONE: 'phone', OTP: 'otp', NAME: 'name', CONSENT: 'consent' };
 
 export default function AuthScreen() {
   const { requestOTP, login, continueAsGuest } = useAuth();
@@ -15,7 +15,9 @@ export default function AuthScreen() {
   const [phone,   setPhone]   = useState('');
   const [otp,     setOtp]     = useState('');
   const [name,    setName]    = useState('');
-  const [referralCode, setReferralCode] = useState('');
+  const [referralCode,    setReferralCode]    = useState('');
+  const [agreedToTerms,   setAgreedToTerms]   = useState(false);
+  const [marketingConsent, setMarketingConsent] = useState(false);
   const [loading,  setLoading]  = useState(false);
   const [devOtp,   setDevOtp]   = useState('');
   const [error,    setError]    = useState('');
@@ -36,6 +38,7 @@ export default function AuthScreen() {
     setMode(next);
     setStep(STEPS.PHONE);
     setPhone(''); setOtp(''); setName(''); setReferralCode('');
+    setAgreedToTerms(false); setMarketingConsent(false);
     setError(''); setDevOtp('');
   }
 
@@ -56,14 +59,14 @@ export default function AuthScreen() {
   const handleOTP = async () => {
     if (otp.length !== 6) return setError('Enter the 6-digit code');
     setError('');
+    // For sign-up, show the consent screen before creating the account
+    if (mode === 'signup') {
+      setStep(STEPS.CONSENT);
+      return;
+    }
     setLoading(true);
     try {
-      // For sign-up, pass name now. For sign-in, pass undefined and handle name-required below.
-      await login(
-        phone.trim(), otp.trim(),
-        mode === 'signup' ? name.trim() : undefined,
-        referralCode.trim() || undefined,
-      );
+      await login(phone.trim(), otp.trim());
     } catch (e) {
       const errMsg = e.response?.data?.error || '';
       if (errMsg.includes('name required')) {
@@ -71,6 +74,22 @@ export default function AuthScreen() {
       } else {
         setError(errMsg || 'Invalid OTP');
       }
+    } finally { setLoading(false); }
+  };
+
+  const handleConsent = async () => {
+    if (!agreedToTerms) return setError('You must agree to join In Common');
+    setError('');
+    setLoading(true);
+    try {
+      await login(
+        phone.trim(), otp.trim(),
+        name.trim(),
+        referralCode.trim() || undefined,
+        marketingConsent,
+      );
+    } catch (e) {
+      setError(e.response?.data?.error || 'Registration failed');
     } finally { setLoading(false); }
   };
 
@@ -88,6 +107,11 @@ export default function AuthScreen() {
   return (
     <LinearGradient colors={['#1B4332', '#2D6A4F', '#40916C']} style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.inner}>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={styles.logo}>In Common</Text>
         <Text style={styles.tagline}>Community loyalty for Jerusalem</Text>
 
@@ -220,6 +244,68 @@ export default function AuthScreen() {
               )}
             </>
           )}
+
+          {step === STEPS.CONSENT && (
+            <>
+              <Text style={styles.consentTitle}>Join In Common</Text>
+              <Text style={styles.consentBody}>
+                By joining, you agree that we collect your name, phone number, and purchase history
+                to track your Common Points and provide rewards across participating businesses.
+              </Text>
+              <Text style={styles.consentBody}>
+                We do not sell your data. We do not share it with anyone outside the In Common
+                network of participating businesses without your separate consent.
+              </Text>
+              <Text style={styles.consentBody}>
+                You can view, correct, or delete your data at any time by contacting{' '}
+                <Text style={styles.consentEmail}>adiqarain.biz@gmail.com</Text>.
+              </Text>
+
+              <TouchableOpacity
+                style={styles.checkRow}
+                onPress={() => { setAgreedToTerms(v => !v); setError(''); }}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
+                  {agreedToTerms && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <Text style={styles.checkLabel}>I agree to join In Common under these terms</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.checkRow}
+                onPress={() => setMarketingConsent(v => !v)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.checkbox, marketingConsent && styles.checkboxChecked]}>
+                  {marketingConsent && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <Text style={styles.checkLabel}>
+                  I would also like to receive offers and updates{' '}
+                  <Text style={styles.optionalHint}>(optional)</Text>
+                </Text>
+              </TouchableOpacity>
+
+              {error ? <Text style={styles.error}>{error}</Text> : null}
+              {loading ? (
+                <>
+                  <ActivityIndicator color="#2D6A4F" />
+                  {slowConn && <Text style={styles.slowHint}>⏳ Waking up server, please wait…</Text>}
+                </>
+              ) : (
+                <TouchableOpacity
+                  style={[styles.btn, !agreedToTerms && styles.btnDisabled]}
+                  onPress={handleConsent}
+                  disabled={!agreedToTerms}
+                >
+                  <Text style={styles.btnText}>🌿  Join In Common</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity onPress={() => { setStep(STEPS.OTP); setError(''); }}>
+                <Text style={styles.back}>← Back</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
 
         <TouchableOpacity onPress={continueAsGuest} style={styles.guestBtn}>
@@ -227,6 +313,7 @@ export default function AuthScreen() {
         </TouchableOpacity>
 
         <Text style={styles.footer}>No bank account required</Text>
+      </ScrollView>
       </KeyboardAvoidingView>
     </LinearGradient>
   );
@@ -234,7 +321,8 @@ export default function AuthScreen() {
 
 const styles = StyleSheet.create({
   container:        { flex: 1 },
-  inner:            { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
+  inner:            { flex: 1 },
+  scroll:           { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 32 },
   logo:             { fontSize: 36, fontWeight: '800', color: '#FFFFFF', textAlign: 'center', marginBottom: 6 },
   tagline:          { fontSize: 15, color: '#FFFFFF99', textAlign: 'center', marginBottom: 40 },
   card:             { backgroundColor: 'white', borderRadius: 20, padding: 24, gap: 16 },
@@ -256,4 +344,16 @@ const styles = StyleSheet.create({
   footer:           { textAlign: 'center', color: '#FFFFFF66', marginTop: 16, fontSize: 13 },
   error:            { color: '#D62828', fontSize: 13, textAlign: 'center' },
   slowHint:         { color: '#888', fontSize: 13, textAlign: 'center', marginTop: 6 },
+
+  // Consent step
+  consentTitle:     { fontSize: 18, fontWeight: '800', color: '#1B4332', textAlign: 'center' },
+  consentBody:      { fontSize: 13, color: '#444', lineHeight: 20 },
+  consentEmail:     { color: '#2D6A4F', fontWeight: '600' },
+  checkRow:         { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  checkbox:         { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: '#2D6A4F', alignItems: 'center', justifyContent: 'center', marginTop: 1, flexShrink: 0 },
+  checkboxChecked:  { backgroundColor: '#2D6A4F' },
+  checkmark:        { color: '#fff', fontSize: 13, fontWeight: '800' },
+  checkLabel:       { flex: 1, fontSize: 13, color: '#333', lineHeight: 20 },
+  optionalHint:     { color: '#999' },
+  btnDisabled:      { backgroundColor: '#A8C5B5', opacity: 0.7 },
 });
