@@ -29,10 +29,10 @@ const SLIDES = [
     subtitle: 'Every point gets you closer to the next level.',
     bg: ['#1B4332', '#2D6A4F'],
     tiers: [
-      { emoji: '🌱', name: 'Seedling', pts: '0 pts' },
-      { emoji: '🫒', name: 'Olive',    pts: '500 pts' },
-      { emoji: '🌲', name: 'Cedar',    pts: '2,000 pts' },
-      { emoji: '🏅', name: 'Keffiyeh', pts: '5,000 pts' },
+      { emoji: '🌱', name: 'Level 1 · Seedling', pts: '0 pts' },
+      { emoji: '🫒', name: 'Level 2 · Olive',    pts: '500 pts' },
+      { emoji: '🌲', name: 'Level 3 · Cedar',    pts: '2,000 pts' },
+      { emoji: '🏅', name: 'Level 4 · Keffiyeh', pts: '5,000 pts' },
     ],
   },
   {

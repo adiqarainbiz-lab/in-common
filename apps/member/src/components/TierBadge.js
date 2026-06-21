@@ -2,10 +2,10 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
 const TIER_CONFIG = {
-  Seedling: { emoji: '🌱', color: '#52B788', label: 'Seedling' },
-  Olive:    { emoji: '🫒', color: '#74C69D', label: 'Olive'    },
-  Cedar:    { emoji: '🌲', color: '#40916C', label: 'Cedar'    },
-  Keffiyeh: { emoji: '🏅', color: '#D4A017', label: 'Keffiyeh' },
+  Seedling: { emoji: '🌱', color: '#52B788', label: 'Level 1 · Seedling' },
+  Olive:    { emoji: '🫒', color: '#74C69D', label: 'Level 2 · Olive'    },
+  Cedar:    { emoji: '🌲', color: '#40916C', label: 'Level 3 · Cedar'    },
+  Keffiyeh: { emoji: '🏅', color: '#D4A017', label: 'Level 4 · Keffiyeh' },
 };
 
 export default function TierBadge({ tier, size = 'md' }) {

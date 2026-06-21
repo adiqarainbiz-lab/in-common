@@ -286,10 +286,10 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Your Journey</Text>
           {[
-            { name: 'Seedling', min: 0,    emoji: '🌱' },
-            { name: 'Olive',    min: 500,  emoji: '🫒' },
-            { name: 'Cedar',    min: 2000, emoji: '🌲' },
-            { name: 'Keffiyeh', min: 5000, emoji: '🏅' },
+            { name: 'Seedling', level: 1, min: 0,    emoji: '🌱' },
+            { name: 'Olive',    level: 2, min: 500,  emoji: '🫒' },
+            { name: 'Cedar',    level: 3, min: 2000, emoji: '🌲' },
+            { name: 'Keffiyeh', level: 4, min: 5000, emoji: '🏅' },
           ].map((t) => {
             const active  = profile.tier === t.name;
             const reached = profile.points_balance >= t.min;
@@ -297,7 +297,7 @@ export default function HomeScreen({ navigation }) {
               <View key={t.name} style={[styles.tierRow, active && styles.tierRowActive]}>
                 <Text style={styles.tierEmoji}>{t.emoji}</Text>
                 <View style={styles.tierInfo}>
-                  <Text style={[styles.tierName, reached && styles.tierReached]}>{t.name}</Text>
+                  <Text style={[styles.tierName, reached && styles.tierReached]}>Level {t.level} · {t.name}</Text>
                   <Text style={styles.tierMin}>{t.min.toLocaleString()} pts</Text>
                 </View>
                 {active && <View style={styles.tierDot} />}

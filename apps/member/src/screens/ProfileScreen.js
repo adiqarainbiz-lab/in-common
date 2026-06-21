@@ -8,7 +8,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
 import { member as memberApi } from '../services/api';
 
-const TIER_EMOJI = { Seedling: '🌱', Olive: '🫒', Cedar: '🌲', Keffiyeh: '🏅' };
+const TIER_EMOJI  = { Seedling: '🌱', Olive: '🫒', Cedar: '🌲', Keffiyeh: '🏅' };
+const TIER_LABEL  = { Seedling: 'Level 1 · Seedling', Olive: 'Level 2 · Olive', Cedar: 'Level 3 · Cedar', Keffiyeh: 'Level 4 · Keffiyeh' };
 
 function StatPill({ label, value, sub }) {
   return (
@@ -110,7 +111,7 @@ export default function ProfileScreen({ navigation }) {
           <Text style={styles.since}>Member since {memberSince}</Text>
           <View style={styles.tierRow}>
             <Text style={styles.tierEmoji}>{TIER_EMOJI[profile.tier]}</Text>
-            <Text style={styles.tierLabel}>{profile.tier}</Text>
+            <Text style={styles.tierLabel}>{TIER_LABEL[profile.tier] || profile.tier}</Text>
           </View>
         </LinearGradient>
 
