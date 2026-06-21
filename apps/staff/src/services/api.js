@@ -32,7 +32,11 @@ export const staffAuth = {
 export const staffApi = {
   businessPortal: ()       => api.get('/business-portal/me'),
   businessStats:  ()       => api.get('/business-portal/stats'),
-  profileRequest: (fields) => api.post('/business-portal/profile-request', fields),
+  updateProfile:  (fields) => api.patch('/business-portal/profile', fields),
+  getPhotos:      ()       => api.get('/business-portal/photos'),
+  addPhoto:       (url, caption) => api.post('/business-portal/photos', { url, caption }),
+  removePhoto:    (id)     => api.delete(`/business-portal/photos/${id}`),
+  reorderPhotos:  (orders) => api.patch('/business-portal/photos/reorder', { orders }),
   offerRequest:   (fields) => api.post('/business-portal/offer-request', fields),
 
   scan:         (token)                    => api.post('/staff/scan',         { token }),

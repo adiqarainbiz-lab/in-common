@@ -44,6 +44,7 @@ async function run() {
     '011_offers.sql', '012_referrals.sql', '013_coordinates.sql', '014_more_coordinates.sql',
     '015_notifications.sql',
     '016_consent.sql',
+    '017_business_customization.sql',
   ];
 
   for (const file of files) {

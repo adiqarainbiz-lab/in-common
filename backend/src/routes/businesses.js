@@ -78,7 +78,12 @@ router.get('/:id', async (req, res, next) => {
       [req.params.id],
     );
     if (!result.rows.length) return res.status(404).json({ error: 'Business not found' });
-    res.json(result.rows[0]);
+    const biz = result.rows[0];
+    const { rows: photoRows } = await db.query(
+      `SELECT id, url, caption, sort_order FROM business_photos WHERE business_id=$1 ORDER BY sort_order ASC`,
+      [req.params.id],
+    );
+    res.json({ ...biz, photos: photoRows });
   } catch (e) { next(e); }
 });
 

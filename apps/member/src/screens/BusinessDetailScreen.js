@@ -141,6 +141,15 @@ export default function BusinessDetailScreen({ route, navigation }) {
         </View>
 
         <View style={styles.body}>
+          {/* Photo Gallery */}
+          {business.photos?.length > 0 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.gallery} contentContainerStyle={styles.galleryContent}>
+              {business.photos.map(p => (
+                <Image key={p.id} source={{ uri: p.url }} style={styles.galleryPhoto} resizeMode="cover" />
+              ))}
+            </ScrollView>
+          )}
+
           {/* Name + category */}
           <View style={styles.nameRow}>
             <View style={styles.categoryChip}>
@@ -310,6 +319,10 @@ const styles = StyleSheet.create({
   calcPts:        { fontSize: 22, fontWeight: '900', color: '#fff' },
   calcPtsLabel:   { fontSize: 11, color: 'rgba(255,255,255,0.7)', fontWeight: '600' },
   calcRate:       { fontSize: 11, color: '#888', marginTop: 4 },
+
+  gallery: { marginTop: 16 },
+  galleryContent: { paddingHorizontal: 20, gap: 10 },
+  galleryPhoto: { width: 160, height: 120, borderRadius: 12 },
 
   offerCard:  { backgroundColor: '#F0FAF5', borderRadius: 14, overflow: 'hidden', marginBottom: 12 },
   offerImage: { width: '100%', height: 160 },

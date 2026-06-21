@@ -3,14 +3,16 @@ import { useState, useEffect } from 'react';
 import api from '../api';
 
 function usePendingCounts() {
-  const [appCount, setAppCount]   = useState(0);
-  const [reqCount, setReqCount]   = useState(0);
+  const [appCount,     setAppCount]     = useState(0);
+  const [reqCount,     setReqCount]     = useState(0);
+  const [changesCount, setChangesCount] = useState(0);
   useEffect(() => {
     if (!localStorage.getItem('admin_token')) return;
     api.get('/admin/applications/pending-count').then(({ data }) => setAppCount(data.count)).catch(() => {});
     api.get('/admin/requests/pending-count').then(({ data }) => setReqCount(data.count)).catch(() => {});
+    api.get('/admin/business-changes/unseen-count').then(({ data }) => setChangesCount(data.count)).catch(() => {});
   }, []);
-  return { appCount, reqCount };
+  return { appCount, reqCount, changesCount };
 }
 
 const badgeStyle = {
@@ -21,7 +23,7 @@ const badgeStyle = {
 export default function Layout({ title, actions, children }) {
   const navigate = useNavigate();
   const admin = JSON.parse(localStorage.getItem('admin_user') || '{}');
-  const { appCount, reqCount } = usePendingCounts();
+  const { appCount, reqCount, changesCount } = usePendingCounts();
 
   function logout() {
     localStorage.removeItem('admin_token');
@@ -47,6 +49,10 @@ export default function Layout({ title, actions, children }) {
           <NavLink to="/requests" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             Requests
             {reqCount > 0 && <span style={badgeStyle}>{reqCount}</span>}
+          </NavLink>
+          <NavLink to="/changes" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            Page Changes
+            {changesCount > 0 && <span style={badgeStyle}>{changesCount}</span>}
           </NavLink>
           <NavLink to="/referrals">Referrals</NavLink>
           <NavLink to="/notifications">Notifications</NavLink>

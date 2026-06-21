@@ -808,4 +808,32 @@ router.get('/referrals', authAdmin, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// ─── Business Change Log ──────────────────────────────────────────────────────
+
+router.get('/business-changes', authAdmin, async (req, res, next) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT id, business_id, business_name, staff_name, changed_fields, created_at, admin_seen
+       FROM business_change_log
+       ORDER BY created_at DESC
+       LIMIT 100`,
+    );
+    res.json(rows);
+  } catch (e) { next(e); }
+});
+
+router.get('/business-changes/unseen-count', authAdmin, async (req, res, next) => {
+  try {
+    const { rows: [r] } = await db.query(`SELECT COUNT(*) AS c FROM business_change_log WHERE admin_seen=FALSE`);
+    res.json({ count: parseInt(r.c) });
+  } catch (e) { next(e); }
+});
+
+router.patch('/business-changes/mark-seen', authAdmin, async (req, res, next) => {
+  try {
+    await db.query(`UPDATE business_change_log SET admin_seen=TRUE WHERE admin_seen=FALSE`);
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
 module.exports = router;
