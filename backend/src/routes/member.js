@@ -1,10 +1,19 @@
-const router = require('express').Router();
-const db     = require('../config/database');
+const router    = require('express').Router();
+const db        = require('../config/database');
+const rateLimit = require('express-rate-limit');
 const { authMember } = require('../middleware/auth');
 const { generateQRToken } = require('../services/qrService');
 
 // All routes require member auth
 router.use(authMember);
+
+// Per-user rate limit: 60 req/min per authenticated member ID
+router.use(rateLimit({
+  windowMs: 60_000,
+  max: 60,
+  keyGenerator: (req) => req.member.sub,
+  message: { error: 'Too many requests, please slow down' },
+}));
 
 // GET /api/member/profile
 router.get('/profile', async (req, res, next) => {
@@ -165,20 +174,32 @@ router.get('/achievements', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// GET /api/member/recommended — businesses not recently visited
+// GET /api/member/recommended — unvisited businesses, favouring member's top category
 router.get('/recommended', async (req, res, next) => {
   try {
     const { rows } = await db.query(
-      `SELECT id, name, category, logo_url, cover_url, points_rate, address, description
-       FROM businesses
-       WHERE is_active = TRUE
-         AND id NOT IN (
-           SELECT DISTINCT business_id FROM transactions
-           WHERE member_id = $1 AND type = 'earn'
-             AND created_at >= NOW() - INTERVAL '30 days'
-             AND business_id IS NOT NULL
-         )
-       ORDER BY RANDOM()
+      `WITH top_cat AS (
+         SELECT b.category
+         FROM transactions t
+         JOIN businesses b ON b.id = t.business_id
+         WHERE t.member_id = $1 AND t.type = 'earn'
+         GROUP BY b.category
+         ORDER BY COUNT(*) DESC
+         LIMIT 1
+       ),
+       not_recent AS (
+         SELECT DISTINCT business_id FROM transactions
+         WHERE member_id = $1 AND type = 'earn'
+           AND created_at >= NOW() - INTERVAL '30 days'
+           AND business_id IS NOT NULL
+       )
+       SELECT b.id, b.name, b.category, b.logo_url, b.cover_url,
+              b.points_rate, b.address, b.description,
+              CASE WHEN b.category = (SELECT category FROM top_cat) THEN 0 ELSE 1 END AS sort_order
+       FROM businesses b
+       WHERE b.is_active = TRUE
+         AND b.id NOT IN (SELECT business_id FROM not_recent)
+       ORDER BY sort_order, b.points_rate DESC
        LIMIT 6`,
       [req.member.sub],
     );
@@ -238,6 +259,23 @@ router.get('/notifications', async (req, res, next) => {
 router.patch('/notifications/read-all', async (req, res, next) => {
   try {
     await db.query('UPDATE member_notifications SET is_read=TRUE WHERE member_id=$1', [req.member.sub]);
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+// DELETE /api/member/account — anonymise and deactivate (GDPR / App Store compliance)
+router.delete('/account', async (req, res, next) => {
+  try {
+    const id = req.member.sub;
+    await db.query(
+      `UPDATE members
+       SET name         = 'Deleted User',
+           phone_number = 'deleted_' || id,
+           push_token   = NULL,
+           is_active    = FALSE
+       WHERE id = $1`,
+      [id],
+    );
     res.json({ ok: true });
   } catch (e) { next(e); }
 });

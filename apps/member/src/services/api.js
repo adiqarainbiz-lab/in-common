@@ -26,8 +26,9 @@ export const member = {
   referral:      ()                   => api.get('/member/referral'),
   achievements:  ()                   => api.get('/member/achievements'),
   recommended:   ()                   => api.get('/member/recommended'),
-  notifications: (page = 1)          => api.get(`/member/notifications?page=${page}`),
-  markAllRead:   ()                   => api.patch('/member/notifications/read-all'),
+  notifications:   (page = 1)        => api.get(`/member/notifications?page=${page}`),
+  markAllRead:     ()                => api.patch('/member/notifications/read-all'),
+  deleteAccount:   ()                => api.delete('/member/account'),
 };
 
 export const pub = {

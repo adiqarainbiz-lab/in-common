@@ -73,6 +73,28 @@ export default function ProfileScreen({ navigation }) {
     ]);
   }
 
+  function confirmDeleteAccount() {
+    Alert.alert(
+      'Delete Account',
+      'This will permanently delete your account and all your points. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete Account',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await memberApi.deleteAccount();
+              logout();
+            } catch {
+              Alert.alert('Error', 'Could not delete account. Please try again.');
+            }
+          },
+        },
+      ],
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView
@@ -133,6 +155,9 @@ export default function ProfileScreen({ navigation }) {
           <TouchableOpacity style={[styles.actionBtn, styles.actionBtnDanger]} onPress={confirmLogout}>
             <Text style={[styles.actionBtnText, styles.actionBtnTextDanger]}>Sign out</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionBtn, styles.actionBtnDelete]} onPress={confirmDeleteAccount}>
+            <Text style={[styles.actionBtnText, styles.actionBtnTextDanger]}>🗑️  Delete Account</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={{ height: 40 }} />
@@ -188,6 +213,7 @@ const styles = StyleSheet.create({
   actions:           { margin: 16, marginTop: 20, gap: 10 },
   actionBtn:         { backgroundColor: '#fff', borderRadius: 14, padding: 16, alignItems: 'center', elevation: 1, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6 },
   actionBtnDanger:   { backgroundColor: '#FEF2F2' },
+  actionBtnDelete:   { backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FECACA' },
   actionBtnText:     { fontSize: 15, fontWeight: '700', color: '#1B4332' },
   actionBtnTextDanger:{ color: '#DC2626' },
 });
